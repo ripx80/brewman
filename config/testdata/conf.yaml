@@ -1,0 +1,30 @@
+# server:
+#   port: 8000
+#   basic-auth:
+#     username: user
+#     password: password
+#   tls:
+#     ca-file: cacertfile
+#     cert-file: certificate
+#     key-file: keyfile
+
+sensors:
+  temperatur-unit: celsius
+  hotwater: 7 #gpio pins
+  masher: 5
+  cooker: 4
+  flowin: 10
+
+control:
+  gpio:
+    - heater-water: none
+    - heater-mash: gpio_pins?
+    - heater-cooking: gpio_pins?
+    # magnet ventil
+# output:
+#   display: gpio_pins?
+
+# cooking:
+#   boiling: 97.5
+#   time-overwrite: False # set to high time: 90min
+

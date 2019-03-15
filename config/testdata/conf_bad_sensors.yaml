@@ -1,0 +1,8 @@
+sensors:
+  temperatur-unit: celsius
+  temperatur:
+    - hotwater: 7
+    - mash: "5"
+    - cooking: 4
+  flow:
+    - input: 10

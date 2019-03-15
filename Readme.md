@@ -1,8 +1,8 @@
 # Brewman
 
-- cmd/cli Kingpin vs Cobra
-- Interface: Sensors (sensors.temp, sensors.flow, sensors.*)
-- Control: 433GHz
+- cmd/cli Kingpin vs Cobra, Kingpin have simple configuration. Cobra has more complexity and power
+
+- Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
 
 - Config: Kingpin Parser like Prometheus
 - Recepies: yaml files - converted from mmum (from python to golang)
@@ -12,13 +12,77 @@
 
 - Tests
 
+## cmd
+
+```bash
+
+brewman
+    set: set things, configs
+    get: basic output
+    describe: verbose output
+    validate: validate things
+    logs: dump logs
+
+Output format:
+    -o=json
+    -o=yaml
+
+Verbosity:
+
+    --v=0 quiet
+    --v=1 show extendet infromation
+    --v=2 debug information
+    --v=3 display all sensor information
+    --v=4 display http requests
+
+
+# recipe
+brewman set recipe file #save file in ENV VAR
+brewman get recipe # recipe name and additional information
+brewman get hops
+brewman get rast <number>
+brewman get cooking
+brewman get fermentation
+brewman describe recipe # print full recipe
+brewman validate recipe
+
+# config
+brewman set config foo=bar
+brewman get config
+brewman set control.flow=gpio_pin?
+
+# run demo programm
+brewman validate # run demo programm with recipe
+brewman validate demo # run demo with demo recipe
+
+# brewing
+brewman start # full steps
+brewman start rast <number> # only the given rast
+brewman start cooking # only start at cooking
+
+
+# sensors
+brewman get sensors # print connected Sensor information
+brewman set sensor # add sensor to config
+
+# api
+
+brewman start server # run only the api server and wait for instructions
+brewman stop # api call to stop
+brewman set remote=https://remoteserver:8000
+
 ## Roadmap
 
 0.1
 
-- read config
+- [x] read config
+- convert, read recipe
 - read recipe
 - temp.Watch() event, error
+
+1.x
+
+- recipe:Download recipe, search recipe
 
 ## Dependencies
 
