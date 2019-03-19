@@ -10,16 +10,16 @@
 
 sensors:
   temperatur-unit: celsius
-  hotwater: 7 #gpio pins
-  masher: 5
-  cooker: 4
-  flowin: 10
+  hotwater: 4 #gpio pin 4, Pin:7 Raspberry B+
+  masher: 11
+  cooker: 12
+  flowin: 13
 
 control:
-  gpio:
-    - heater-water: none
-    - heater-mash: gpio_pins?
-    - heater-cooking: gpio_pins?
+  heater-water: 29
+  heater-mash: 31
+  heater-cooker:
+    32
     # magnet ventil
 # output:
 #   display: gpio_pins?

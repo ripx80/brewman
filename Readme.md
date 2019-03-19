@@ -12,6 +12,8 @@
 
 - Tests
 
+- Set Recipe file as ENV_VAR. So you can interact with this recipe. get hops aso.
+
 ## cmd
 
 ```bash

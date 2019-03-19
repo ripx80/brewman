@@ -23,13 +23,37 @@ type SensorConfig struct {
 }
 
 type ControlConfig struct {
-	Gpio []map[string]string `yaml:"gpio"`
+	HeaterWater  int `yaml:"heater-water" validate:"min=0,max=40"`
+	HeaterMash   int `yaml:"heater-mash" validate:"min=0,max=40"`
+	HeaterCooker int `yaml:"heater-cooker" validate:"min=0,max=40"`
+	//Gpio []map[string]string `yaml:"gpio"`
 }
+
+var (
+	DefaultConfig = Config{
+		Sensor:  DefaultSensorConfig,
+		Control: DefaultControlConfig,
+	}
+
+	DefaultSensorConfig = SensorConfig{
+		TemperaturUnit: "Celsius",
+		Hotwater:       4, // GPIO PIN
+		Masher:         11,
+		Cooker:         12,
+		FlowIn:         13,
+	}
+
+	DefaultControlConfig = ControlConfig{
+		HeaterWater:  29,
+		HeaterMash:   31,
+		HeaterCooker: 32,
+	}
+)
 
 func Load(s string) (*Config, error) {
 	cfg := &Config{}
 	//init default config
-	//*cfg = DefaultConfig
+	*cfg = DefaultConfig
 
 	err := yaml.UnmarshalStrict([]byte(s), cfg)
 	if err != nil {
