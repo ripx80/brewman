@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Sensor  SensorConfig  `yaml:"sensors"`
 	Control ControlConfig `yaml:"control"`
+	Recipe  RecipeConfig  `yaml:"recipe"`
 	// original is the input from which the config was parsed.
 	original string
 }
@@ -29,10 +30,15 @@ type ControlConfig struct {
 	//Gpio []map[string]string `yaml:"gpio"`
 }
 
+type RecipeConfig struct {
+	File string `yaml:"file"`
+}
+
 var (
 	DefaultConfig = Config{
 		Sensor:  DefaultSensorConfig,
 		Control: DefaultControlConfig,
+		Recipe:  DefaultRecipeConfig,
 	}
 
 	DefaultSensorConfig = SensorConfig{
@@ -47,6 +53,10 @@ var (
 		HeaterWater:  29,
 		HeaterMash:   31,
 		HeaterCooker: 32,
+	}
+
+	DefaultRecipeConfig = RecipeConfig{
+		File: "recipe.yaml",
 	}
 )
 
@@ -73,4 +83,12 @@ func LoadFile(filename string) (*Config, error) {
 		return nil, fmt.Errorf("parsing YAML file %s: %v", filename, err)
 	}
 	return cfg, nil
+}
+
+func (c Config) String() string {
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
 }

@@ -6,6 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/ripx80/brewman/config"
 )
 
 // var (
@@ -27,20 +29,27 @@ import (
 // 	validate = app.Command("validate", "validate brewing things like sensors")
 // )
 
-type DefaultConfigCmd struct {
+type ConfigCmd struct {
 	configFile   string
 	outputFormat string
 	verbose      int
 	recipe       *os.File
 }
 
+// func (c ConfigCmd) String() string {
+// 	b, err := yaml.Marshal(c)
+// 	if err != nil {
+// 		return fmt.Sprintf("<error creating config string: %s>", err)
+// 	}
+// 	return string(b)
+// }
+
 func main() {
 
 	// config for cmd flags
-	cfg := DefaultConfigCmd{}
+	cfg := ConfigCmd{}
 
 	//c := config.DefaultConfig
-
 	a := kingpin.New("brewman", "A command-line brew application")
 	a.Version("1.0")
 	a.HelpFlag.Short('h')
@@ -57,8 +66,12 @@ func main() {
 	sc.Command("config", "output current config")
 	sc.Command("sensors", "output sensor information")
 
-	sc = a.Command("set", "set values").Command("recipe", "set recipe to brew")
-	sc.Arg("filename", "file of the recipe").Required().FileVar(&cfg.recipe)
+	// maybe for later. save in config file
+	// sc = a.Command("set", "set values").Command("recipe", "set recipe to brew")
+	// sc.Arg("filename", "file of the recipe").Required().FileVar(&cfg.recipe)
+
+	//add sensor?
+	//delete sensor?
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
@@ -69,15 +82,13 @@ func main() {
 
 	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
 	case "get config":
-		fmt.Println("get config")
+		fmt.Println(config.DefaultConfig.String())
 	case "get sensors":
 		fmt.Println("get sensors")
-	case "set recipe":
-		fmt.Printf("set recipe: %s\n", cfg.recipe.Name())
-		//validate config
-		os.Setenv("BREWMAN_RECIPE", "1")
+		// case "set recipe":
+		// 	fmt.Printf("set recipe: %s\n", cfg.recipe.Name())
+		//todo parse and validate recipe
+
 	}
 
-	fmt.Println(cfg.configFile)
-	fmt.Println(cfg.outputFormat)
 }
