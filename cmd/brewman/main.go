@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"os"
-
-	"github.com/pkg/errors"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"path/filepath"
 
 	"github.com/ripx80/brewman/config"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 // var (
@@ -30,64 +29,100 @@ import (
 // )
 
 type ConfigCmd struct {
-	configFile   string
+	configFile   *os.File
 	outputFormat string
 	verbose      int
 	recipe       *os.File
 }
 
-// func (c ConfigCmd) String() string {
-// 	b, err := yaml.Marshal(c)
-// 	if err != nil {
-// 		return fmt.Sprintf("<error creating config string: %s>", err)
-// 	}
-// 	return string(b)
-// }
+func absolutePath(fp *os.File) (string, error) {
+	return filepath.Abs(fp.Name())
+}
 
 func main() {
 
 	// config for cmd flags
 	cfg := ConfigCmd{}
 
-	//c := config.DefaultConfig
 	a := kingpin.New("brewman", "A command-line brew application")
 	a.Version("1.0")
 	a.HelpFlag.Short('h')
 	a.Author("Ripx80")
 
 	a.Flag("config.file", "brewman configuration file path.").
-		Default("brewman.yml").StringVar(&cfg.configFile)
+		FileVar(&cfg.configFile)
 
-	a.Flag("output.format", "output format: yaml, json").
+	a.Flag("output.format", "output format").
+		HintOptions("text", "json").
 		Default("text").StringVar(&cfg.outputFormat)
 
 	//sc is the tmp placeholder to interact with the subcommand
 	sc := a.Command("get", "get basic output")
 	sc.Command("config", "output current config")
 	sc.Command("sensors", "output sensor information")
+	sc.Command("control", "output control information")
+	sc.Command("recipe", "output control information")
 
-	// maybe for later. save in config file
-	// sc = a.Command("set", "set values").Command("recipe", "set recipe to brew")
-	// sc.Arg("filename", "file of the recipe").Required().FileVar(&cfg.recipe)
+	// save in config file
+	sc = a.Command("set", "set values").Command("recipe", "set recipe to brew")
+	sc.Arg("filename", "file of the recipe").Required().FileVar(&cfg.recipe)
 
 	//add sensor?
 	//delete sensor?
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Error parsing commandline arguments"))
+		log.Error("Error parsing commandline arguments: ", err)
 		a.Usage(os.Args[1:])
-		os.Exit(2)
 	}
+
+	// default config if no config file is present
+	configFile, err := config.Load("")
+
+	if cfg.configFile == nil {
+		fp, err := os.Open("brewman.yaml")
+		if err == nil {
+			cfg.configFile = fp
+		}
+	}
+
+	if cfg.configFile != nil {
+		fp, err := filepath.Abs(cfg.configFile.Name())
+		if err != nil {
+			log.Error("Error parsing config file path: ", err)
+		}
+		configFile, err = config.LoadFile(fp)
+	}
+
+	if cfg.outputFormat == "json" {
+		jf := log.JSONFormatter{}
+		//jf.PrettyPrint = true
+		log.SetFormatter(&jf)
+	}
+
+	log.SetLevel(log.InfoLevel)
 
 	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
 	case "get config":
-		fmt.Println(config.DefaultConfig.String())
+		log.Info(configFile)
+
 	case "get sensors":
-		fmt.Println("get sensors")
-		// case "set recipe":
-		// 	fmt.Printf("set recipe: %s\n", cfg.recipe.Name())
-		//todo parse and validate recipe
+		log.Info(configFile.Sensor)
+
+	case "get controls":
+		log.Info(configFile.Control)
+
+	case "set recipe":
+
+		configFile.Recipe.File, err = absolutePath(cfg.recipe)
+		if err != nil {
+			log.Error("set recipe error: ", err)
+		}
+		//todo: parse and validate, append to config file
+
+		fallthrough
+	case "get recipe":
+		log.Info(configFile.Recipe)
 
 	}
 

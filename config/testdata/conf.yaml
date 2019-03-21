@@ -13,7 +13,7 @@ sensors:
   hotwater: 4 #gpio pin 4, Pin:7 Raspberry B+
   masher: 11
   cooker: 12
-  flowin: 13
+  flowin: 30
 
 control:
   heater-water: 29
@@ -28,3 +28,5 @@ control:
 #   boiling: 97.5
 #   time-overwrite: False # set to high time: 90min
 
+# general:
+#   logfile = ""

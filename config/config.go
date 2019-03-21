@@ -92,3 +92,42 @@ func (c Config) String() string {
 	}
 	return string(b)
 }
+
+func (c SensorConfig) String() string {
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return fmt.Sprintf("<error creating sensor config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (c ControlConfig) String() string {
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return fmt.Sprintf("<error creating control config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (c RecipeConfig) String() string {
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return fmt.Sprintf("<error creating recipe config string: %s>", err)
+	}
+	return string(b)
+}
+
+//UnmarshalYAML implements the yaml.Unmarshaler interface
+// func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+// 	type plain Config
+// 	return unmarshal((*plain)(c))
+// }
+
+// func (c Config) UnmarshalYAML(unmarshal func(interface{}) error) error{
+// 	*c = DefaultConfig
+// 	type plain Config
+// 	if err:=unmarshal((*plain)(c)); err != nil{
+// 		return err
+// 	}
+
+// }
