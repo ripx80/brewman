@@ -93,35 +93,35 @@ func (c Config) String() string {
 	return string(b)
 }
 
-func (c SensorConfig) String() string {
-	b, err := yaml.Marshal(c)
+func (c Config) Save(fn string) error {
+	return ioutil.WriteFile(fn, []byte(c.String()), 0644)
+}
+
+func (sc SensorConfig) String() string {
+	b, err := yaml.Marshal(sc)
 	if err != nil {
 		return fmt.Sprintf("<error creating sensor config string: %s>", err)
 	}
 	return string(b)
 }
 
-func (c ControlConfig) String() string {
-	b, err := yaml.Marshal(c)
+func (cc ControlConfig) String() string {
+	b, err := yaml.Marshal(cc)
 	if err != nil {
 		return fmt.Sprintf("<error creating control config string: %s>", err)
 	}
 	return string(b)
 }
 
-func (c RecipeConfig) String() string {
-	b, err := yaml.Marshal(c)
+func (rc RecipeConfig) String() string {
+	b, err := yaml.Marshal(rc)
 	if err != nil {
 		return fmt.Sprintf("<error creating recipe config string: %s>", err)
 	}
 	return string(b)
 }
 
-//UnmarshalYAML implements the yaml.Unmarshaler interface
-// func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
-// 	type plain Config
-// 	return unmarshal((*plain)(c))
-// }
+// Impmement this interface allows you to parse the config file!
 
 // func (c Config) UnmarshalYAML(unmarshal func(interface{}) error) error{
 // 	*c = DefaultConfig

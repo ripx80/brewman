@@ -14,6 +14,8 @@
 
 - Set Recipe file as ENV_VAR. So you can interact with this recipe. get hops aso.
 
+- At the moment no comments supported. If you set recipe the config will be overwritten. Parser dont support preserving comments
+
 ## cmd
 
 ```bash
@@ -78,8 +80,8 @@ brewman set remote=https://remoteserver:8000
 0.1
 
 - [x] read config
+- [x] save config
 - convert, read recipe
-- read recipe
 - temp.Watch() event, error
 
 1.x

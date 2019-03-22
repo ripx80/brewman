@@ -9,27 +9,8 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-// var (
-// 	app = kingpin.New(os.Args[0], "A command-line brew application")
-
-// 	output  = app.Flag("o", "output format. use yaml or json").String()
-// 	verbose = app.Flag("v", "verbosity, v=0 quiet, v=1 extended, v=2 debug").Int()
-
-// 	get        = app.Command("get", "get basic output")
-// 	getConfig  = get.Command("config", "output current config")
-// 	getSensors = get.Command("sensors", "output sensor information")
-
-// 	set           = app.Command("set", "set values")
-// 	setRecipe     = set.Command("recipe", "set recipe to brew")
-// 	setRecipeFile = setRecipe.Arg("filename", "file of the recipe").Required().File()
-
-// 	describe = app.Command("describe", "get verbose output of objects")
-
-// 	validate = app.Command("validate", "validate brewing things like sensors")
-// )
-
 type ConfigCmd struct {
-	configFile   *os.File
+	configFile   string
 	outputFormat string
 	verbose      int
 	recipe       *os.File
@@ -50,7 +31,7 @@ func main() {
 	a.Author("Ripx80")
 
 	a.Flag("config.file", "brewman configuration file path.").
-		FileVar(&cfg.configFile)
+		StringVar(&cfg.configFile)
 
 	a.Flag("output.format", "output format").
 		HintOptions("text", "json").
@@ -64,8 +45,10 @@ func main() {
 	sc.Command("recipe", "output control information")
 
 	// save in config file
-	sc = a.Command("set", "set values").Command("recipe", "set recipe to brew")
-	sc.Arg("filename", "file of the recipe").Required().FileVar(&cfg.recipe)
+	sc = a.Command("set", "set values")
+	sc.Command("config", "save current config to file")
+	sr := sc.Command("recipe", "set recipe to brew")
+	sr.Arg("filename", "file of the recipe").Required().FileVar(&cfg.recipe)
 
 	//add sensor?
 	//delete sensor?
@@ -76,22 +59,16 @@ func main() {
 		a.Usage(os.Args[1:])
 	}
 
-	// default config if no config file is present
-	configFile, err := config.Load("")
+	// default config
+	configFile, _ := config.Load("")
 
-	if cfg.configFile == nil {
-		fp, err := os.Open("brewman.yaml")
-		if err == nil {
-			cfg.configFile = fp
-		}
-	}
-
-	if cfg.configFile != nil {
-		fp, err := filepath.Abs(cfg.configFile.Name())
+	if cfg.configFile != "" {
+		configFile, err = config.LoadFile(cfg.configFile)
 		if err != nil {
-			log.Error("Error parsing config file path: ", err)
+			log.Panic("canot load configuration file: ", err)
 		}
-		configFile, err = config.LoadFile(fp)
+	} else {
+		cfg.configFile = "brewman.yaml"
 	}
 
 	if cfg.outputFormat == "json" {
@@ -103,6 +80,11 @@ func main() {
 	log.SetLevel(log.InfoLevel)
 
 	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
+
+	case "set config":
+		configFile.Save(cfg.configFile)
+		fallthrough
+
 	case "get config":
 		log.Info(configFile)
 
@@ -113,14 +95,14 @@ func main() {
 		log.Info(configFile.Control)
 
 	case "set recipe":
-
 		configFile.Recipe.File, err = absolutePath(cfg.recipe)
 		if err != nil {
 			log.Error("set recipe error: ", err)
 		}
-		//todo: parse and validate, append to config file
-
+		configFile.Save(cfg.configFile)
+		//todo: parse and validate
 		fallthrough
+
 	case "get recipe":
 		log.Info(configFile.Recipe)
 
