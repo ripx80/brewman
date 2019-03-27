@@ -8,11 +8,9 @@
 - Recepies: yaml files - converted from mmum (from python to golang)
 
 - Metric Exporter: Prometheus, NodeExporter and internal
-- Log: logger to console, file, socket?
+- Log: logger to console, file, socket: Yes with MultipleWriter.
 
 - Tests
-
-- Set Recipe file as ENV_VAR. So you can interact with this recipe. get hops aso.
 
 - At the moment no comments supported. If you set recipe the config will be overwritten. Parser dont support preserving comments
 

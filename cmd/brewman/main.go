@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -86,7 +87,7 @@ func main() {
 		fallthrough
 
 	case "get config":
-		log.Info(configFile)
+		log.Info(fmt.Sprintf("\n%s", configFile))
 
 	case "get sensors":
 		log.Info(configFile.Sensor)
