@@ -4,8 +4,6 @@
     "Sorte": "India Pale Ale (IPA)",
     "Autor": "Braunhans",
     "Klonbier": "nein",
-    
-
     "Klonbier_Original": "",
     "Ausschlagswuerze": 55,
     "Sudhausausbeute": 67,
@@ -14,14 +12,8 @@
     "Farbe": "12",
     "Alkohol": 6.4,
     "Kurzbeschreibung": "Englisches IPA mit traditionell Fuggles, Fuggles, Fuggles... Sch\u00f6n herb und tolles Hopfenaroma.",
-    
-
     "Infusion_Hauptguss": "38",
-
-
-    "Dekoktion_Einmaisch_Zubruehwasser_gesamt": "0",   
-    
-
+    "Dekoktion_Einmaisch_Zubruehwasser_gesamt": "0",
     "Malz1": "Pale Ale Malz",
     "Malz1_Menge": 13.3,
     "Malz1_Einheit": "kg",
@@ -43,11 +35,6 @@
     "Malz7": "",
     "Malz7_Menge": 0,
     "Malz7_Einheit": "kg",
-
-
-    "Maischform": "infusion",    
-    
-
     "Infusion_Einmaischtemperatur": 52,
     "Infusion_Rasttemperatur1": "52",
     "Infusion_Rastzeit1": "15",
@@ -63,7 +50,6 @@
     "Infusion_Rastzeit6": "",
     "Infusion_Rasttemperatur7": "",
     "Infusion_Rastzeit7": "",
-
     "Dekoktion_0_Volumen": "",
     "Dekoktion_0_Temperatur_ist": "",
     "Dekoktion_0_Temperatur_resultierend": "",
@@ -89,13 +75,10 @@
     "Dekoktion_3_Teilmaische_Temperatur": "",
     "Dekoktion_3_Teilmaische_Rastzeit": "",
     "Dekoktion_3_Teilmaische_Kochzeit": "",
-
     "Abmaischtemperatur": "78",
     "Nachguss": "48",
     "Kochzeit_Wuerze": "90",
-    
-
-    "Hopfen_VWH_1_Sorte": "",   
+    "Hopfen_VWH_1_Sorte": "",
     "Hopfen_VWH_1_Menge": "",
     "Hopfen_VWH_1_alpha": "",
     "Hopfen_VWH_2_Sorte": "",
@@ -103,6 +86,7 @@
     "Hopfen_VWH_2_alpha": "",
     "Hopfen_VWH_3_Sorte": "",
     "Hopfen_VWH_3_Menge": "",
+    "Maischform": "infusion",
     "Hopfen_VWH_3_alpha": "",
     "Hopfen_1_Sorte": "Fuggles, Pellets",
     "Hopfen_1_Menge": "280",

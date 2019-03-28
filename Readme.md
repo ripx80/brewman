@@ -14,6 +14,8 @@
 
 - At the moment no comments supported. If you set recipe the config will be overwritten. Parser dont support preserving comments
 
+- Recipe Parser not support Dekoktion and has only kg as unit for malt
+
 ## cmd
 
 ```bash
