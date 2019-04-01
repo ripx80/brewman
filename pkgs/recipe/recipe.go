@@ -54,11 +54,18 @@ type RecipeFermentation struct {
 	Hops        []Hop        // Stopfhopfen
 	Ingredients []Ingredient // Weitere Zutaten
 }
-
-type Malt struct {
+type RecipeUnit struct {
 	Name   string
 	Amount float64
 }
+
+type RecipeTimeUnit struct {
+	RecipeUnit
+	Time int
+}
+
+type Malt RecipeUnit
+type Ingredient RecipeTimeUnit
 
 type Rest struct {
 	Time       int
@@ -66,12 +73,6 @@ type Rest struct {
 }
 
 type Hop struct {
-	Name   string
-	Amount int
-	Alpha  float64
-}
-
-type Ingredient struct {
-	Name   string
-	Amount float64 //in g
+	RecipeTimeUnit
+	Alpha float64
 }

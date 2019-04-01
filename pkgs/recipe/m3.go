@@ -1,5 +1,10 @@
 package recipe
 
+type Converter struct {
+	keys []string
+	cmap map[string]interface{}
+	pos  int
+}
 type RecipeM3 struct {
 	Name     string `json:"Name" validate:"nonzero"`
 	Datum    string `json:"Datum" validate:"nonzero"`
@@ -27,12 +32,13 @@ type RecipeM3 struct {
 	Karbonisierung      string `json:"Karbonisierung"`
 	AnmerkungAutor      string `json:"Anmerkung_Autor"`
 
-	Malts    []Malt
-	Rests    []Rest
-	FontHops []Hop
-	Hops     []Hop
-	Whirpool []Hop
-	// Ingredients []Ingredient
+	Malts        []Malt
+	Rests        []Rest
+	FontHops     []Hop
+	Hops         []Hop
+	Whirpool     []Hop
+	Ingredients  []Ingredient
+	Fermentation RecipeFermentation
 
 	// Malts will be directly convert to internal struct
 	// Rasts will be directly convert to internal struct
