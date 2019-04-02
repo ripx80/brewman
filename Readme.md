@@ -15,6 +15,10 @@
 - At the moment no comments supported. If you set recipe the config will be overwritten. Parser dont support preserving comments
 
 - Recipe Parser not support Dekoktion and has only kg as unit for malt
+- Recipe Parser not support Value Ranges in Recipe (Gaertemperatur: 20-24)
+
+Ideas:
+    - set the max volume of mesher, cooker, fermenter. So you can auto calc max Outcome with MainCast and Grouting!
 
 ## cmd
 

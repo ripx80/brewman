@@ -1,6 +1,9 @@
 package recipe
 
-// all units in g, l
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Recipe struct {
 	Global       RecipeGlobal       `json:"Global"`
@@ -8,6 +11,7 @@ type Recipe struct {
 	Mash         RecipeMash         `json:"Mash"`
 	Cook         RecipeCook         `json:"Cook"`
 	Fermentation RecipeFermentation `json:"Fermentation"`
+	original     string
 }
 
 type RecipeGlobal struct {
@@ -64,8 +68,8 @@ type RecipeTimeUnit struct {
 	Time int
 }
 
-type Malt RecipeUnit
-type Ingredient RecipeTimeUnit
+type Malt = RecipeUnit
+type Ingredient = RecipeTimeUnit
 
 type Rest struct {
 	Time       int
@@ -75,4 +79,20 @@ type Rest struct {
 type Hop struct {
 	RecipeTimeUnit
 	Alpha float64
+}
+
+func (r Recipe) String() string {
+	b, err := json.Marshal(r)
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (r Recipe) PrettyPrint() string {
+	b, err := json.MarshalIndent(r, "", "   ")
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
 }
