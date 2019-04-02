@@ -113,6 +113,14 @@ func (rm RecipeM3) String() string {
 	return string(b)
 }
 
+func (rm RecipeM3) PrettyPrint() string {
+	b, err := json.MarshalIndent(rm, "", "   ")
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
 func (rm *RecipeM3) UnmarshalJSON(data []byte) error {
 	// this is no good implementation. I hope my skills will be better in the future to do this -.-
 	// Unmarshal good data from this creepy json.

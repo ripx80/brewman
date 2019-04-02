@@ -3,6 +3,9 @@ package recipe
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+
+	"github.com/ghodss/yaml"
 )
 
 type Recipe struct {
@@ -95,4 +98,17 @@ func (r Recipe) PrettyPrint() string {
 		return fmt.Sprintf("<error creating config string: %s>", err)
 	}
 	return string(b)
+}
+
+func (r Recipe) Save(fn string) error {
+	return ioutil.WriteFile(fn, []byte(r.String()), 0644)
+}
+
+func (r Recipe) SavePretty(fn string) error {
+	return ioutil.WriteFile(fn, []byte(r.PrettyPrint()), 0644)
+}
+
+//not working
+func (r Recipe) SavePrettyYaml(fn string) error {
+	return ioutil.WriteFile(fn, []byte(yaml.Marshal(r.String()), 0644)
 }

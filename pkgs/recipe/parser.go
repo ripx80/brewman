@@ -8,6 +8,7 @@ import (
 type Parser interface {
 	Load(s string) (*Recipe, error)
 	String() string
+	PrettyPrint() string
 }
 
 func KeyExists(m map[string]interface{}, k string) bool {
