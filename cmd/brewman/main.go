@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/ripx80/brewman/config"
+	"github.com/ripx80/brewman/pkgs/brew"
+	"github.com/ripx80/brewman/pkgs/recipe"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -51,6 +53,9 @@ func main() {
 	sr := sc.Command("recipe", "set recipe to brew")
 	sr.Arg("filename", "file of the recipe").Required().FileVar(&cfg.recipe)
 
+	sc = a.Command("start", "start brew steps")
+	sc.Command("mash", "start the mash precedure")
+
 	//add sensor?
 	//delete sensor?
 
@@ -70,6 +75,9 @@ func main() {
 		}
 	} else {
 		cfg.configFile = "brewman.yaml"
+		if _, err := os.Stat(cfg.configFile); err == nil {
+			configFile, err = config.LoadFile(cfg.configFile)
+		}
 	}
 
 	if cfg.outputFormat == "json" {
@@ -87,7 +95,7 @@ func main() {
 		fallthrough
 
 	case "get config":
-		log.Info(fmt.Sprintf("\n%s", configFile))
+		log.Info(fmt.Sprintf("\n%s\n%s", cfg.configFile, configFile))
 
 	case "get sensors":
 		log.Info(configFile.Sensor)
@@ -101,12 +109,22 @@ func main() {
 			log.Error("set recipe error: ", err)
 		}
 		configFile.Save(cfg.configFile)
-		//todo: parse and validate
 		fallthrough
 
 	case "get recipe":
-		log.Info(configFile.Recipe)
+		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+		log.Info(fmt.Sprintf("\n%s\n%s", configFile.Recipe, recipe))
 
+	case "start mash":
+		log.Info("Start Mashing")
+		// brew.Init() // init all devices and sensors aso
+		err = brew.Mash()
+
+		// Use pins, buses, devices, etc.
 	}
 
 }
