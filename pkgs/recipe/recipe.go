@@ -84,8 +84,16 @@ type Hop struct {
 	Alpha float64
 }
 
+func (r *Recipe) Load(s string) (*Recipe, error) {
+	err := yaml.Unmarshal([]byte(s), r)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
 func (r Recipe) String() string {
-	b, err := json.Marshal(r)
+	b, err := yaml.Marshal(r)
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
 	}
@@ -110,5 +118,9 @@ func (r Recipe) SavePretty(fn string) error {
 
 //not working
 func (r Recipe) SavePrettyYaml(fn string) error {
-	return ioutil.WriteFile(fn, []byte(yaml.Marshal(r.String()), 0644)
+	s, err := yaml.Marshal(r)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(fn, []byte(s), 0644)
 }

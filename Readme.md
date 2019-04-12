@@ -1,24 +1,118 @@
 # Brewman
 
-- cmd/cli Kingpin vs Cobra, Kingpin have simple configuration. Cobra has more complexity and power
+## Features
 
-- Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
-
-- Config: Kingpin Parser like Prometheus
-- Recepies: yaml files - converted from mmum (from python to golang)
-
-- Metric Exporter: Prometheus, NodeExporter and internal
 - Log: logger to console, file, socket: Yes with MultipleWriter.
 
+## Not Supported
+
+- At the moment no comments supported in recipe or config file. If you set recipe the config will be overwritten. Parser dont support preserving comments
+- Recipe Parser not support Dekoktion and has only kg as unit for malt
+- Recipe Parser not support Value Ranges in Recipe (Gaertemperatur: 20-24) and Unit "ml/l".
+
+## Roadmap
+
+- Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
+- Metric Exporter: Prometheus, NodeExporter and internal
 - Tests
 
-- At the moment no comments supported. If you set recipe the config will be overwritten. Parser dont support preserving comments
+0.1
 
-- Recipe Parser not support Dekoktion and has only kg as unit for malt
-- Recipe Parser not support Value Ranges in Recipe (Gaertemperatur: 20-24)
+- [x] read config
+- [x] save config
+- [x] convert, save and read recipe
+- [x] build cmd tool for convert m3 recipes
+- [ ] TempWatcher, Temp.Get(), targetTemp, Hold Time
 
-Ideas:
+## struct
+
+Valves not supproted yet
+
+(Full Program, All Steps can be independently start from each other)
+
+### Mesh
+
+- Water in Masher (Open/Close Valves), Count Water Amount, Checks (Open Valves -> Water flows)
+- Heat Water in Masher (Heater On/Off, Agitator On/Off), Checks (Heater On -> Temp increase) Sensors: Plate#1, Temp#1
+- Malt Fill into Masher (Stop: Confirm), Program for Rests
+- Läutern (Stop: confirm, Start Hot Tube Water: confirm), Valves to Cooker, Font Hops/Ingredients
+
+### HotTube
+
+- (P) Water in Hot Tube (Same as 1. Other Valves) Sensors Plate#2, Temp#2
+- (P) Heat Water in Hot Tube (Same as 2.)
+
+### Cooking
+
+- Heat Water in Cooker (Temp to cook and hold: 97.5, set with cmd while cooking for precision)
+- Reach Cook Temp: Cooking Time, Info about Hops/Ingredients get in! (message with beep and terminal)
+- Finish Cook Time: Stop(confirm), Whirlpool Info
+
+### Fermentation
+
+- Info About Fermentation
+
+### Implementation
+
+```go
+
+// Control Elements
+struct Valve interface
+    func Open()
+    func Close()
+
+struct Control interface
+    func On() // HIGH, LOW or Programm (433Utils)
+    func Off() interface
+
+// Sensors
+func (registerSensor(Sensor, func))
+func (getHardwareSensors)
+
+struct Sensor interface
+    Get()
+
+struct OneWire interface
+
+struct WaterFlow type
+struct Thermometer type
+struct WaterLevel type
+
+// Outputs
+
+struct Output interface
+struct Screen type
+struct Terminal type
+struct Prometheus type
+
+
+// Rührwerk
+struct Agitator type
+    Name string
+    Control: Control Element
+
+struct Heater type
+    Name string
+    Agitator
+    Logic *Logic //Hysteresis (Ursache/Wirking -> Heizen), Overshoot (Überschwingen, Über einen soll zustand hinaus und dann auf diesen einstellt)
+    Sensor: Thermometer
+    Control: Control Element
+
+// Watchmen
+func CheckWaterFlow()
+func TempWatcher(Thermometer, Control Element, Output)
+```
+
+## Ideas
+
     - set the max volume of mesher, cooker, fermenter. So you can auto calc max Outcome with MainCast and Grouting!
+
+    - build cmd for convert recipes
+    - recipe:Download recipe, search recipe
+
+## Config
+
+- Temperatur of HotWaterTube
 
 ## cmd
 
@@ -79,18 +173,7 @@ brewman start server # run only the api server and wait for instructions
 brewman stop # api call to stop
 brewman set remote=https://remoteserver:8000
 
-## Roadmap
-
-0.1
-
-- [x] read config
-- [x] save config
-- convert, read recipe
-- temp.Watch() event, error
-
-1.x
-
-- recipe:Download recipe, search recipe
+```
 
 ## Dependencies
 

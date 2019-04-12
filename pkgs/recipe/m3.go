@@ -84,6 +84,7 @@ func (rm *RecipeM3) Load(s string) (*Recipe, error) {
 		InTemperatur:  rm.InTemperatur,
 		OutTemperatur: rm.OutTemperatur,
 		Malts:         rm.Malts,
+		Rests:         rm.Rests,
 	}
 
 	recipe.Cook = RecipeCook{
@@ -139,9 +140,8 @@ func (rm *RecipeM3) UnmarshalJSON(data []byte) error {
 
 	conv := &Converter{}
 	conv.cmap = result
-	//Todo: convert Einheit kg to g
-	conv.keys = map[string]string{"Name": "Malz%d", "Amount": "Malz%d_Menge"}
-	rm.Malts, err = conv.RecipeUnits()
+	conv.keys = map[string]string{"Name": "Malz%d", "Amount": "Malz%d_Menge", "Unit": "Malz%d_Einheit"}
+	rm.Malts, err = conv.Malts()
 	if err != nil {
 		return err
 	}
@@ -170,13 +170,13 @@ func (rm *RecipeM3) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	conv.keys = map[string]string{"Name": "WeitereZutat_Wuerze_%d_Name", "Amount": "WeitereZutat_Wuerze_%d_Menge", "Time": "WeitereZutat_Wuerze_%d_Kochzeit"}
+	conv.keys = map[string]string{"Name": "WeitereZutat_Wuerze_%d_Name", "Amount": "WeitereZutat_Wuerze_%d_Menge", "Unit": "WeitereZutat_Wuerze_%d_Einheit", "Time": "WeitereZutat_Wuerze_%d_Kochzeit"}
 	rm.Ingredients, err = conv.RecipeTimeUnits()
 	if err != nil {
 		return err
 	}
 
-	conv.keys = map[string]string{"Name": "WeitereZutat_Gaerung_%d_Name", "Amount": "WeitereZutat_Gaerung_%d_Menge"}
+	conv.keys = map[string]string{"Name": "WeitereZutat_Gaerung_%d_Name", "Amount": "WeitereZutat_Gaerung_%d_Menge", "Unit": "WeitereZutat_Gaerung_%d_Einheit"}
 	rm.Fermentation.Ingredients, err = conv.Ingredient()
 	if err != nil {
 		return err
@@ -220,6 +220,19 @@ func (con *Converter) RecipeUnit() (*RecipeUnit, error) {
 		recipeUnit.Amount = con.cmap[k].(float64)
 	}
 
+	if _, ok := con.keys["Unit"]; !ok {
+		return recipeUnit, nil
+	}
+
+	k = fmt.Sprintf(con.keys["Unit"], con.pos)
+	if !KeyExists(con.cmap, k) {
+		return nil, errors.New(fmt.Sprintf("Unit missing: %s", k))
+	}
+
+	if con.cmap[k] == "kg" {
+		recipeUnit.Amount = recipeUnit.Amount * 1000
+	}
+
 	return recipeUnit, nil
 }
 
@@ -244,7 +257,7 @@ func (con *Converter) RecipeTimeUnit() (*RecipeTimeUnit, error) {
 	return recipeTimeUnit, nil
 }
 
-func (con *Converter) RecipeUnits() ([]RecipeUnit, error) {
+func (con *Converter) Malts() ([]RecipeUnit, error) {
 	var Ru []RecipeUnit
 
 	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
