@@ -10,6 +10,7 @@ import (
 	"github.com/ripx80/brewman/pkgs/recipe"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"periph.io/x/periph/conn/gpio/gpioreg"
 )
 
 type ConfigCmd struct {
@@ -43,8 +44,8 @@ func main() {
 	//sc is the tmp placeholder to interact with the subcommand
 	sc := a.Command("get", "get basic output")
 	sc.Command("config", "output current config")
-	sc.Command("sensors", "output sensor information")
-	sc.Command("control", "output control information")
+	//sc.Command("sensors", "output sensor information")
+	//sc.Command("control", "output control information")
 	sc.Command("recipe", "output control information")
 
 	// save in config file
@@ -97,11 +98,11 @@ func main() {
 	case "get config":
 		log.Info(fmt.Sprintf("\n%s\n%s", cfg.configFile, configFile))
 
-	case "get sensors":
-		log.Info(configFile.Sensor)
+	// case "get sensors":
+	// 	log.Info(configFile.Sensor)
 
-	case "get controls":
-		log.Info(configFile.Control)
+	// case "get controls":
+	// 	log.Info(configFile.Control)
 
 	case "set recipe":
 		configFile.Recipe.File, err = absolutePath(cfg.recipe)
@@ -122,9 +123,50 @@ func main() {
 	case "start mash":
 		log.Info("Start Mashing")
 		// brew.Init() // init all devices and sensors aso
-		err = brew.Mash()
+		per := &brew.Periph{TempSensors: make(map[string]brew.TempSensor), Controls: make(map[string]brew.Control)}
+		err := per.Init()
+		if err != nil {
+			log.Error(err)
+		}
 
-		// Use pins, buses, devices, etc.
+		/*
+			HotTube.init(TempSensor, Control)
+			Masher.Init(TempSensor, Control)
+			Cooker.Init(TempSensor, Control)
+
+			TempSensor: Name, Bus, Address
+		*/
+
+		// use periph/cmd/onewire-list to get all informations
+
+		// init the masher
+		ssr := &brew.SSR{Pin: gpioreg.ByName("6")}
+		per.Controls["SSR-Plate-1"] = ssr
+
+		ssr = &brew.SSR{Pin: gpioreg.ByName("7")}
+		per.Controls["SSR-Agitator"] = ssr
+
+		ds := &brew.DS18B20{}
+		//ds.Device, err = ds18b20.New(&bus, addr, 10)
+		err = ds.InitDummy()
+		if err != nil {
+			log.Error("Failed to register Temp Sensor")
+			os.Exit(1)
+		}
+		per.TempSensors["Temperatur-Masher"] = ds
+		masher := &brew.Masher{
+			Temp:     per.TempSensors["Temperatur-Masher"],
+			Heater:   per.Controls["SSR-Plate-1"],
+			Agitator: per.Controls["SSR-Agitator"],
+		}
+		masher.Mash()
+
+		temp, err := ds.Get()
+		if err != nil {
+			log.Error(err)
+		}
+		log.Info(temp)
+
 	}
 
 }

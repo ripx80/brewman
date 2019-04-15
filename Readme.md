@@ -114,6 +114,42 @@ func TempWatcher(Thermometer, Control Element, Output)
 
 - Temperatur of HotWaterTube
 
+```yaml
+pods:
+  # support only one temp at the moment
+  hotwater:
+    temperatur:
+      device: "ds18b20"
+      bus: 5
+      address: 0x3343839898
+    control: 3
+  masher:
+    control: 4
+    agiator: 10
+    temperatur:
+      device: "ds18b20"
+      bus: 4
+      address: 0x387839898
+  cooker:
+    temperatur:
+      device: "ds18b20"
+      bus: 14
+      address: 0x3354839898
+    control: 30
+
+
+sensors:
+  hotwater: 4 # add address
+  masher: 11
+  cooker: 12
+  flowin: 13
+control:
+  heater-water: 29
+  heater-mash: 31
+  heater-cooker: 32
+
+```
+
 ## cmd
 
 ```bash
@@ -185,7 +221,7 @@ brewman set remote=https://remoteserver:8000
 
 - https://gobot.io/documentation/platforms/raspi/
 - https://godoc.org/periph.io/x/periph/conn/onewire
-
+- https://github.com/kidoman/embd
 ## Gobot
 
 [doc](https://gobot.io/documentation)

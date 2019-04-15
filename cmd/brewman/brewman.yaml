@@ -1,0 +1,29 @@
+global:
+  temperatur-unit: Celsius
+
+recipe:
+  file: /home/rip/go/src/github.com/ripx80/brewman/examples/TagTeamIPA.yaml
+
+# support only one temp at the moment
+hotwater:
+  temperatur:
+    device: "ds18b20"
+    bus: 5
+    address: 0x3343839898
+  control: 3
+masher:
+  control: 4
+  agiator: 10
+  temperatur:
+    device: "ds18b20"
+    bus: 4
+    address: 0x387839898
+cooker:
+  temperatur:
+    device: "ds18b20"
+    bus: 14
+    address: 0x3354839898
+  control: 30
+
+
+
