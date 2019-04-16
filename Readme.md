@@ -24,6 +24,10 @@
 - [x] build cmd tool for convert m3 recipes
 - [ ] TempWatcher, Temp.Get(), targetTemp, Hold Time
 
+## config
+
+config values of bus is string because periph need a string input: 40, PWM0, GPIO40 are the same
+
 ## struct
 
 Valves not supproted yet

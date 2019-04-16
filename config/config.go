@@ -7,21 +7,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// type PodsConfig struct {
-// 	Hotwater PodConfig `yaml:"hotwater" validate:"min=0,max=40"`
-// 	Masher   PodConfig `yaml:"masher" validate:"min=0,max=40"`
-// 	Cooker   PodConfig `yaml:"cooker" validate:"min=0,max=40"`
-// }
-
 type TemperaturConfig struct {
-	Device  string `yaml:"device"` // only ds18b20 supp.
-	Bus     int    `yaml:"bus"`
-	Address int    `yaml:"address"`
+	Device  string `yaml:"device" validate:"nonzero"` // only ds18b20 supp.
+	Bus     string `yaml:"bus" validate:"min=0, max=40, nonzero"`
+	Address int    `yaml:"address" validate:"nonzero"`
 }
 
 type PodConfig struct {
-	Control    int `yaml:"control" validate:"min=0,max=40"`
-	Agiator    int `yaml:"agiator" validate:"min=0,max=40"`
+	Control    string `yaml:"control" validate:"min=0,max=40,nonzero"`
+	Agiator    string `yaml:"agiator" validate:"min=0,max=40"`
 	Temperatur TemperaturConfig
 }
 type Config struct {
@@ -29,9 +23,7 @@ type Config struct {
 	Hotwater PodConfig    `yaml:"hotwater"`
 	Masher   PodConfig    `yaml:"masher"`
 	Cooker   PodConfig    `yaml:"cooker"`
-	//Sensor  SensorConfig  `yaml:"sensors"`
-	//Control ControlConfig `yaml:"control"`
-	Recipe RecipeConfig `yaml:"recipe"`
+	Recipe   RecipeConfig `yaml:"recipe"`
 	// original is the input from which the config was parsed.
 	original string
 }
@@ -39,20 +31,6 @@ type Config struct {
 type GlobalConfig struct {
 	TemperaturUnit string `yaml:"temperatur-unit" validate:"regexp=[Cc]elsius|[Kk]elvin"`
 }
-
-// type SensorConfig struct {
-// 	Hotwater int `yaml:"hotwater" validate:"min=0,max=40"`
-// 	Masher   int `yaml:"masher" validate:"min=0,max=40"`
-// 	Cooker   int `yaml:"cooker" validate:"min=0,max=40"`
-// 	FlowIn   int `yaml:"flowin" validate:"min=0,max=40"`
-// }
-
-// type ControlConfig struct {
-// 	HeaterWater  int `yaml:"heater-water" validate:"min=0,max=40"`
-// 	HeaterMash   int `yaml:"heater-mash" validate:"min=0,max=40"`
-// 	HeaterCooker int `yaml:"heater-cooker" validate:"min=0,max=40"`
-// 	//Gpio []map[string]string `yaml:"gpio"`
-// }
 
 type RecipeConfig struct {
 	File string `yaml:"file"`
@@ -74,13 +52,6 @@ var (
 	// DefaultPodConfig = PodConfig{
 	// 	Control: 10,
 	// }
-
-	// DefaultControlConfig = ControlConfig{
-	// 	HeaterWater:  29,
-	// 	HeaterMash:   31,
-	// 	HeaterCooker: 32,
-	// }
-
 	DefaultRecipeConfig = RecipeConfig{
 		File: "recipe.yaml",
 	}

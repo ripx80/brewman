@@ -4,26 +4,27 @@ global:
 recipe:
   file: /home/rip/go/src/github.com/ripx80/brewman/examples/TagTeamIPA.yaml
 
-# support only one temp at the moment
+# support only one temp at the moment and gpio pin control (ssr)
+## config values of bus is string because periph need a string input: 40, PWM0, GPIO40 are the same
 hotwater:
   temperatur:
     device: "ds18b20"
-    bus: 5
+    bus: "5"
     address: 0x3343839898
-  control: 3
+  control: "3"
 masher:
-  control: 4
-  agiator: 10
+  control: "4"
+  agiator: "10"
   temperatur:
     device: "ds18b20"
-    bus: 4
+    bus: "40"
     address: 0x387839898
 cooker:
   temperatur:
     device: "ds18b20"
-    bus: 14
+    bus: "14"
     address: 0x3354839898
-  control: 30
+  control: "30"
 
 
 

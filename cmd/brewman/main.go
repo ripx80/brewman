@@ -10,6 +10,7 @@ import (
 	"github.com/ripx80/brewman/pkgs/recipe"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/validator.v2"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 )
 
@@ -72,12 +73,18 @@ func main() {
 	if cfg.configFile != "" {
 		configFile, err = config.LoadFile(cfg.configFile)
 		if err != nil {
-			log.Panic("canot load configuration file: ", err)
+			log.Error("canot load configuration file: ", err)
+			os.Exit(1)
 		}
+
 	} else {
 		cfg.configFile = "brewman.yaml"
 		if _, err := os.Stat(cfg.configFile); err == nil {
 			configFile, err = config.LoadFile(cfg.configFile)
+			if err != nil {
+				log.Error("canot load config file: ", err)
+				os.Exit(1)
+			}
 		}
 	}
 
@@ -88,6 +95,10 @@ func main() {
 	}
 
 	log.SetLevel(log.InfoLevel)
+
+	if err := validator.Validate(configFile); err != nil {
+		log.Error("Config file validation failed: ", err)
+	}
 
 	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
 
@@ -121,7 +132,13 @@ func main() {
 		log.Info(fmt.Sprintf("\n%s\n%s", configFile.Recipe, recipe))
 
 	case "start mash":
-		log.Info("Start Mashing")
+
+		// check if masher is configured
+		if configFile.Masher == (config.PodConfig{}) {
+			log.Error("No Masher in config file. You must have a masher to mash :-)")
+			os.Exit(1)
+		}
+
 		// brew.Init() // init all devices and sensors aso
 		per := &brew.Periph{TempSensors: make(map[string]brew.TempSensor), Controls: make(map[string]brew.Control)}
 		err := per.Init()
@@ -140,32 +157,68 @@ func main() {
 		// use periph/cmd/onewire-list to get all informations
 
 		// init the masher
-		ssr := &brew.SSR{Pin: gpioreg.ByName("6")}
-		per.Controls["SSR-Plate-1"] = ssr
+		ssr := &brew.SSR{Pin: gpioreg.ByName(configFile.Masher.Control)}
+		per.Controls["Masher-Control"] = ssr
 
-		ssr = &brew.SSR{Pin: gpioreg.ByName("7")}
-		per.Controls["SSR-Agitator"] = ssr
+		ssr = &brew.SSR{Pin: gpioreg.ByName(configFile.Masher.Agiator)}
+		per.Controls["Masher-Agitator"] = ssr
 
-		ds := &brew.DS18B20{}
 		//ds.Device, err = ds18b20.New(&bus, addr, 10)
+		ds := &brew.DS18B20{}
 		err = ds.InitDummy()
 		if err != nil {
 			log.Error("Failed to register Temp Sensor")
 			os.Exit(1)
 		}
-		per.TempSensors["Temperatur-Masher"] = ds
-		masher := &brew.Masher{
-			Temp:     per.TempSensors["Temperatur-Masher"],
-			Heater:   per.Controls["SSR-Plate-1"],
-			Agitator: per.Controls["SSR-Agitator"],
-		}
-		masher.Mash()
+		per.TempSensors["Masher-Temperatur"] = ds
 
-		temp, err := ds.Get()
+		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
 		if err != nil {
 			log.Error(err)
+			os.Exit(1)
 		}
-		log.Info(temp)
+
+		masher := &brew.Masher{
+			Temp:     per.TempSensors["Masher-Temperatur"],
+			Heater:   per.Controls["SSR-Plate-1"],
+			Agitator: per.Controls["SSR-Agitator"],
+			Recipe:   recipe.Mash,
+		}
+
+		logc := make(chan string)
+		done := make(chan error, 2)
+		defer close(done)
+
+		go func() {
+			done <- masher.Mash(logc)
+		}()
+
+		go func() {
+			done <- func() error {
+				for {
+					j, more := <-logc
+					if more {
+						log.Info(j)
+					} else {
+						return nil
+					}
+				}
+			}()
+		}()
+
+		var stopped bool
+		for i := 0; i < cap(done); i++ {
+			if err := <-done; err != nil {
+				log.Error(err)
+			}
+			if !stopped {
+				stopped = true
+				close(logc)
+				log.Info("Close")
+			}
+		}
+		log.Info("Q")
+		//https://github.com/heptio/workgroup
 
 	}
 
