@@ -1,23 +1,42 @@
 package brew
 
 import (
-	"github.com/ripx80/brewman/pkgs/recipe"
+	"fmt"
+
+	"periph.io/x/periph/conn/physic"
 )
 
-type Masher struct {
+type Logger interface {
+	Log(v ...interface{})
+	Logf(format string, v ...interface{})
+}
+
+type Kettle struct {
 	Temp     TempSensor
 	Heater   Control
 	Agitator Control
-	Recipe   recipe.RecipeMash
-	Log      chan string
+	//Recipe   recipe.RecipeMash
 }
 
-func (m *Masher) Mash(log chan string) error {
-	log <- "Start Mashing"
-	temp, err := m.Temp.Get()
+func (k *Kettle) GoToTemp(tempTo physic.Temperature) error {
+
+	current, err := k.Temp.Get()
 	if err != nil {
 		return err
 	}
-	log <- temp.String()
+
+	fmt.Printf("%f < %f\n", current.Celsius(), tempTo.Celsius())
+
+	if current.Celsius() < tempTo.Celsius() {
+		fmt.Println(k.Heater.State())
+		if !k.Heater.State() {
+			k.Heater.On()
+		}
+	}
+	k.Heater.Off()
+
 	return nil
+
 }
+
+func (k *Kettle) None() {}

@@ -22,6 +22,7 @@
 - [x] save config
 - [x] convert, save and read recipe
 - [x] build cmd tool for convert m3 recipes
+- [ ] change dep to go modules
 - [ ] TempWatcher, Temp.Get(), targetTemp, Hold Time
 
 ## config
@@ -226,6 +227,7 @@ brewman set remote=https://remoteserver:8000
 - https://gobot.io/documentation/platforms/raspi/
 - https://godoc.org/periph.io/x/periph/conn/onewire
 - https://github.com/kidoman/embd
+
 ## Gobot
 
 [doc](https://gobot.io/documentation)
@@ -236,3 +238,9 @@ Update to latest Raspian Jessie OS and install git and go.
 You would normally install Go and Gobot on your workstation.
 Once installed, cross compile your program on your workstation, transfer the final executable to your Raspberry Pi.
 The pin numbering used by your Gobot program should match the way your board is labeled right on the board itself.
+
+### Info
+
+- [go-log](https://github.com/go-log/log) logging with interfaces from [this](https://dave.cheney.net/2017/01/23/the-package-level-logger-anti-pattern) article
+- [datadog-guide](https://www.datadoghq.com/blog/go-logging/) std logging interface with const values
+- [clog](https://github.com/go-clog/clog) use go chan to log back

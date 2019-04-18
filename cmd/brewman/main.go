@@ -9,15 +9,18 @@ import (
 	"github.com/ripx80/brewman/pkgs/brew"
 	"github.com/ripx80/brewman/pkgs/recipe"
 	log "github.com/sirupsen/logrus"
+
 	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/validator.v2"
 	"periph.io/x/periph/conn/gpio/gpioreg"
+
+	"periph.io/x/periph/conn/physic"
 )
 
 type ConfigCmd struct {
 	configFile   string
 	outputFormat string
-	verbose      int
+	debug        *bool
 	recipe       *os.File
 }
 
@@ -42,11 +45,10 @@ func main() {
 		HintOptions("text", "json").
 		Default("text").StringVar(&cfg.outputFormat)
 
-	//sc is the tmp placeholder to interact with the subcommand
+	cfg.debug = a.Flag("output.debug", "Enable debug mode.").Short('v').Bool()
+
 	sc := a.Command("get", "get basic output")
 	sc.Command("config", "output current config")
-	//sc.Command("sensors", "output sensor information")
-	//sc.Command("control", "output control information")
 	sc.Command("recipe", "output control information")
 
 	// save in config file
@@ -57,9 +59,6 @@ func main() {
 
 	sc = a.Command("start", "start brew steps")
 	sc.Command("mash", "start the mash precedure")
-
-	//add sensor?
-	//delete sensor?
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
@@ -88,13 +87,15 @@ func main() {
 		}
 	}
 
+	if *cfg.debug {
+		log.SetLevel(log.DebugLevel)
+	}
+
 	if cfg.outputFormat == "json" {
 		jf := log.JSONFormatter{}
 		//jf.PrettyPrint = true
 		log.SetFormatter(&jf)
 	}
-
-	log.SetLevel(log.InfoLevel)
 
 	if err := validator.Validate(configFile); err != nil {
 		log.Error("Config file validation failed: ", err)
@@ -108,12 +109,6 @@ func main() {
 
 	case "get config":
 		log.Info(fmt.Sprintf("\n%s\n%s", cfg.configFile, configFile))
-
-	// case "get sensors":
-	// 	log.Info(configFile.Sensor)
-
-	// case "get controls":
-	// 	log.Info(configFile.Control)
 
 	case "set recipe":
 		configFile.Recipe.File, err = absolutePath(cfg.recipe)
@@ -157,10 +152,25 @@ func main() {
 		// use periph/cmd/onewire-list to get all informations
 
 		// init the masher
-		ssr := &brew.SSR{Pin: gpioreg.ByName(configFile.Masher.Control)}
+		/*gpio
+		gpio.Level() //return LOW or HIGH, no need of state
+		*/
+
+		p := gpioreg.ByName(configFile.Masher.Control)
+		if p == nil {
+			//switch to Fatalf
+			log.Infof("Failed to find Pin: %s", configFile.Masher.Agiator)
+		}
+
+		ssr := &brew.SSR{Pin: p}
 		per.Controls["Masher-Control"] = ssr
 
-		ssr = &brew.SSR{Pin: gpioreg.ByName(configFile.Masher.Agiator)}
+		p = gpioreg.ByName(configFile.Masher.Agiator)
+		if p == nil {
+			log.Infof("Failed to find Pin: %s", configFile.Masher.Agiator)
+		}
+
+		ssr = &brew.SSR{Pin: p}
 		per.Controls["Masher-Agitator"] = ssr
 
 		//ds.Device, err = ds18b20.New(&bus, addr, 10)
@@ -172,53 +182,23 @@ func main() {
 		}
 		per.TempSensors["Masher-Temperatur"] = ds
 
-		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
+		//recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
 		}
 
-		masher := &brew.Masher{
+		masher := &brew.Kettle{
 			Temp:     per.TempSensors["Masher-Temperatur"],
 			Heater:   per.Controls["SSR-Plate-1"],
 			Agitator: per.Controls["SSR-Agitator"],
-			Recipe:   recipe.Mash,
 		}
 
-		logc := make(chan string)
-		done := make(chan error, 2)
-		defer close(done)
+		var t physic.Temperature
 
-		go func() {
-			done <- masher.Mash(logc)
-		}()
-
-		go func() {
-			done <- func() error {
-				for {
-					j, more := <-logc
-					if more {
-						log.Info(j)
-					} else {
-						return nil
-					}
-				}
-			}()
-		}()
-
-		var stopped bool
-		for i := 0; i < cap(done); i++ {
-			if err := <-done; err != nil {
-				log.Error(err)
-			}
-			if !stopped {
-				stopped = true
-				close(logc)
-				log.Info("Close")
-			}
-		}
-		log.Info("Q")
-		//https://github.com/heptio/workgroup
+		t.Set("40C")
+		//masher.GoToTemp(t)
+		masher.None()
 
 	}
 

@@ -12,6 +12,7 @@ import (
 type Control interface {
 	On() error
 	Off() error
+	State() bool
 }
 
 type SSR struct {
@@ -19,7 +20,6 @@ type SSR struct {
 }
 
 func (ssr *SSR) On() error {
-	fmt.Println("Turn On")
 	l := gpio.High
 	ssr.Pin.Out(l)
 	return nil
@@ -28,8 +28,11 @@ func (ssr *SSR) On() error {
 func (ssr *SSR) Off() error {
 	l := gpio.Low
 	ssr.Pin.Out(l)
-	fmt.Println("Turn Off")
 	return nil
+}
+
+func (ssr *SSR) State() bool {
+	return bool(ssr.Pin.Read())
 }
 
 type Periph struct {
