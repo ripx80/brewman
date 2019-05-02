@@ -25,14 +25,14 @@ func (k *Kettle) GoToTemp(tempTo physic.Temperature) error {
 		return err
 	}
 
-	fmt.Printf("%f < %f\n", current.Celsius(), tempTo.Celsius())
+	fmt.Printf("%f < %f\n", current, tempTo)
 
-	if current.Celsius() < tempTo.Celsius() {
-		fmt.Println(k.Heater.State())
-		if !k.Heater.State() {
-			k.Heater.On()
-		}
-	}
+	// if current < tempTo {
+	// 	fmt.Println(k.Heater.State())
+	// 	if !k.Heater.State() {
+	// 		k.Heater.On()
+	// 	}
+	// }
 	k.Heater.Off()
 
 	return nil

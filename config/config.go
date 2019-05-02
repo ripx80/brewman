@@ -10,7 +10,7 @@ import (
 type TemperaturConfig struct {
 	Device  string `yaml:"device" validate:"nonzero"` // only ds18b20 supp.
 	Bus     string `yaml:"bus" validate:"min=0, max=40, nonzero"`
-	Address int    `yaml:"address" validate:"nonzero"`
+	Address int64    `yaml:"address" validate:"nonzero"`
 }
 
 type PodConfig struct {

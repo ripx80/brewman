@@ -9,22 +9,24 @@ recipe:
 hotwater:
   temperatur:
     device: "ds18b20"
-    bus: "5"
-    address: 0x3343839898
+    bus: "14"
+    address: 0x416c5040bff
   control: "3"
 masher:
   control: "4"
   agiator: "10"
   temperatur:
     device: "ds18b20"
-    bus: "40"
-    address: 0x387839898
+    bus: "14"
+    address: 0x316c2d550ff
 cooker:
   temperatur:
     device: "ds18b20"
     bus: "14"
-    address: 0x3354839898
+    address: 0x416c4dec6ff
   control: "30"
+
+
 
 
 

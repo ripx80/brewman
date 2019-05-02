@@ -24,7 +24,7 @@
 - [x] build cmd tool for convert m3 recipes
 - [ ] change dep to go modules
 - [ ] TempWatcher, Temp.Get(), targetTemp, Hold Time
-
+- [ ] convert all yaml packages to one (recipe, config)
 ## config
 
 config values of bus is string because periph need a string input: 40, PWM0, GPIO40 are the same
