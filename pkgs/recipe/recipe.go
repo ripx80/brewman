@@ -124,3 +124,35 @@ func (r Recipe) SavePrettyYaml(fn string) error {
 	}
 	return ioutil.WriteFile(fn, []byte(s), 0644)
 }
+
+func (r RecipeGlobal) String() string {
+	b, err := yaml.Marshal(r)
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (r RecipeGlobal) PrettyPrint() string {
+	b, err := json.MarshalIndent(r, "", "   ")
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (r RecipeMash) String() string {
+	b, err := yaml.Marshal(r)
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (r RecipeMash) PrettyPrint() string {
+	b, err := json.MarshalIndent(r, "", "   ")
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}

@@ -9,6 +9,7 @@
 - At the moment no comments supported in recipe or config file. If you set recipe the config will be overwritten. Parser dont support preserving comments
 - Recipe Parser not support Dekoktion and has only kg as unit for malt
 - Recipe Parser not support Value Ranges in Recipe (Gaertemperatur: 20-24) and Unit "ml/l".
+- Periph.io onewire, I'm not gonna be able to get it to work. Sorry I used the files in sys
 
 ## Roadmap
 
@@ -25,6 +26,30 @@
 - [ ] change dep to go modules
 - [ ] TempWatcher, Temp.Get(), targetTemp, Hold Time
 - [ ] convert all yaml packages to one (recipe, config)
+- [ ] build Makefile
+- [ ] Control all on/off switch
+- [ ] os signal handling. Turn off all controls
+
+## Bug Fixes
+
+- [ ] check if recipe verify values in recipe!
+
+
+## Units
+
+- All weight sizes are gramm
+- All Time units are Minutes
+
+## general func
+
+- args: parse, check
+- config: read, check
+- recipe: read, verify (time, temp values)
+- sensors: initilize, check, use
+- controls: initilize, check, use
+- execute recipe plan
+- execute metric endpoint
+
 ## config
 
 config values of bus is string because periph need a string input: 40, PWM0, GPIO40 are the same

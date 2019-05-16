@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type TemperaturConfig struct {
-	Device  string `yaml:"device" validate:"nonzero"` // only ds18b20 supp.
-	Bus     string `yaml:"bus" validate:"min=0, max=40, nonzero"`
-	Address int64    `yaml:"address" validate:"nonzero"`
+	Device  string `yaml:"device" validate:"nonzero"`  // only ds18b20 supp.
+	Address string `yaml:"address" validate:"nonzero"` // path to sys file. its bad i know
 }
 
 type PodConfig struct {
@@ -29,7 +28,8 @@ type Config struct {
 }
 
 type GlobalConfig struct {
-	TemperaturUnit string `yaml:"temperatur-unit" validate:"regexp=[Cc]elsius|[Kk]elvin"`
+	TemperaturUnit     string  `yaml:"temperatur-unit" validate:"regexp=[Cc]elsius|[Kk]elvin"`
+	HotwaterTemperatur float64 `yaml:"hotwater-temperatur" validate:"min=70,max=90"`
 }
 
 type RecipeConfig struct {
@@ -46,7 +46,8 @@ var (
 	}
 
 	DefaultGlobalConfig = GlobalConfig{
-		TemperaturUnit: "Celsius",
+		TemperaturUnit:     "Celsius",
+		HotwaterTemperatur: 76.0,
 	}
 
 	// DefaultPodConfig = PodConfig{

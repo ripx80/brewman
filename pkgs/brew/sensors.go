@@ -1,12 +1,10 @@
 package brew
 
 import (
-	"errors"
-
-	"periph.io/x/periph/conn/onewire"
-	"periph.io/x/periph/conn/onewire/onewiretest"
-	"periph.io/x/periph/conn/physic"
-	"periph.io/x/periph/devices/ds18b20"
+	"fmt"
+	"io/ioutil"
+	"math"
+	"strconv"
 )
 
 /*
@@ -16,68 +14,56 @@ func Present() bool if on raspi board
 
 */
 type TempSensor interface {
-	Get() (*physic.Temperature, error)
+	Get() (float64, error)
 }
 
 type DS18B20 struct {
-	Name   string
-	Device *ds18b20.Dev
+	Name string
+	Path string
 }
 
-func (ds *DS18B20) Init(addr onewire.Address) error {
-	//var addr onewire.Address = 0x740000070e41ac28
-	var err error
-	bus := onewiretest.Playback{}
-	ds.Device, err = ds18b20.New(&bus, addr, 10)
+type TempDummy struct {
+	Name string
+	Fn   callback
+	Temp float64
+}
 
+func UpDown(x float64) float64 {
+	if math.Mod(x, 2.0) > 0 {
+		return x + 3.0
+	}
+	return x - 3.0
+}
+
+type callback func(float64) float64
+
+func (td *TempDummy) Get() (float64, error) {
+	td.Temp = td.Fn(td.Temp)
+	if td.Temp < 0 {
+		return 0, fmt.Errorf("negative value detected")
+	}
+
+	return td.Temp, nil
+}
+
+func (ds DS18B20) Get() (float64, error) {
+
+	data, err := ioutil.ReadFile(ds.Path)
 	if err != nil {
-		return errors.New("invalid resolution")
-	}
-	return nil
-}
-
-func (ds *DS18B20) Get() (*physic.Temperature, error) {
-	e := physic.Env{}
-	if err := ds.Device.Sense(&e); err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	if err := ds.Device.Halt(); err != nil {
-		return nil, err
-	}
-
-	return &e.Temperature, nil
-}
-
-func (ds *DS18B20) InitDummy() error {
-	//bus := &onewiretest.Playback{}
-	ops := []onewiretest.IO{
-		// Match ROM + Read Scratchpad (init)
-		{
-			W: []uint8{0x55, 0x28, 0xac, 0x41, 0xe, 0x7, 0x0, 0x0, 0x74, 0xbe},
-			R: []uint8{0xe0, 0x1, 0x0, 0x0, 0x3f, 0xff, 0x10, 0x10, 0x3f},
-		},
-		// Match ROM + Convert
-		{
-			W:    []uint8{0x55, 0x28, 0xac, 0x41, 0xe, 0x7, 0x0, 0x0, 0x74, 0x44},
-			Pull: true,
-		},
-		// Match ROM + Read Scratchpad (read temp)
-		{
-			W: []uint8{0x55, 0x28, 0xac, 0x41, 0xe, 0x7, 0x0, 0x0, 0x74, 0xbe},
-			R: []uint8{0xe0, 0x1, 0x0, 0x0, 0x3f, 0xff, 0x10, 0x10, 0x3f},
-		},
-	}
-	var addr onewire.Address = 0x740000070e41ac28
-	bus := onewiretest.Playback{Ops: ops}
-	dev, err := ds18b20.New(&bus, addr, 10)
-
+	str := string(data[len(data)-6 : len(data)-1])
+	temp, err := strconv.ParseFloat(str, 64)
 	if err != nil {
-		return errors.New("invalid resolution")
+		fmt.Printf("canot read from %s: %s", ds.Path, err)
+		return 0, fmt.Errorf("canot read from %s: %s", ds.Path, err)
 	}
-
-	ds.Device = dev
-	return nil
+	temp = temp / 1000
+	if temp < 0 {
+		return 0, fmt.Errorf("negative value detected %s: %s", ds.Path, err)
+	}
+	return temp, nil
 }
 
 // func (registerSensor(Sensor, func))

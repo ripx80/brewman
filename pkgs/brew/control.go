@@ -1,12 +1,7 @@
 package brew
 
 import (
-	"errors"
-	"fmt"
-
-	"periph.io/x/periph"
 	"periph.io/x/periph/conn/gpio"
-	"periph.io/x/periph/host"
 )
 
 type Control interface {
@@ -18,6 +13,20 @@ type Control interface {
 type SSR struct {
 	Pin gpio.PinIO
 }
+
+type SSRDummy struct {
+	state bool
+}
+
+func (d *SSRDummy) On() error {
+	d.state = true
+	return nil
+}
+func (d *SSRDummy) Off() error {
+	d.state = false
+	return nil
+}
+func (d SSRDummy) State() bool { return d.state }
 
 func (ssr *SSR) On() error {
 	l := gpio.High
@@ -35,19 +44,8 @@ func (ssr *SSR) State() bool {
 	return bool(ssr.Pin.Read())
 }
 
-type Periph struct {
-	State       *periph.State
-	TempSensors map[string]TempSensor
-	Controls    map[string]Control
-}
-
-func (p *Periph) Init() error {
-
-	state, err := host.Init()
-
-	if err != nil {
-		return errors.New(fmt.Sprintf("failed to initialize periph: %v", err))
-	}
-	p.State = state
-	return nil
-}
+// type Periph struct {
+// 	State       *periph.State
+// 	TempSensors map[string]TempSensor
+// 	Controls    map[string]Control
+// }
