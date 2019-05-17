@@ -14,8 +14,6 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	validator "gopkg.in/validator.v2"
-	"periph.io/x/periph/conn/gpio/gpioreg"
-	"periph.io/x/periph/host"
 )
 
 type ConfigCmd struct {
@@ -60,43 +58,6 @@ func confirm(msg string) bool {
 
 }
 
-func KettleInit(kettleConfig config.PodConfig) (*brew.Kettle, error) {
-
-	var kettle = &brew.Kettle{}
-
-	if kettleConfig == (config.PodConfig{}) {
-		return nil, fmt.Errorf("No Masher in config file. You must have a masher to mash")
-	}
-
-	_, err := host.Init()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize periph: %v", err)
-	}
-
-	//Heater
-	p := gpioreg.ByName(kettleConfig.Control)
-	if p == nil {
-		return nil, fmt.Errorf("Failed to find Heater Pin: %s", kettleConfig.Agiator)
-	}
-	kettle.Heater = &brew.SSR{Pin: p}
-
-	// Agiator
-	if kettleConfig.Agiator != "" {
-		p = gpioreg.ByName(kettleConfig.Agiator)
-		if p == nil {
-			return nil, fmt.Errorf("Failed to find Agiator Pin: %s", kettleConfig.Agiator)
-		}
-		kettle.Agitator = &brew.SSR{Pin: p}
-	}
-
-	// Temperatur
-	kettle.Temp = brew.DS18B20{Name: kettleConfig.Temperatur.Device, Path: kettleConfig.Temperatur.Address}
-	if err != nil {
-		return nil, fmt.Errorf("Failed to register Temp Sensor: %s", err)
-	}
-	return kettle, nil
-}
-
 func main() {
 
 	// config for cmd flags
@@ -129,6 +90,12 @@ func main() {
 	sc = a.Command("mash", "mash brew steps")
 	sc.Command("start", "start the mash precedure")
 	sc.Command("dummy", "dummy the mash precedure")
+
+	sc = a.Command("hotwater", "make hotwater in kettle")
+	sc.Command("start", "start the hotwater precedure")
+
+	sc = a.Command("cook", "cooking your stuff")
+	sc.Command("start", "start the cooking precedure")
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
@@ -197,8 +164,8 @@ func main() {
 		log.Info(fmt.Sprintf("\n%s\n%s", configFile.Recipe, recipe))
 
 	case "hotwater start":
-		kettle, err := KettleInit(configFile.Hotwater)
-		if err != nil {
+		kettle := &brew.Kettle{}
+		if err = kettle.Init(configFile.Hotwater); err != nil {
 			log.Fatal("Failed to init Kettle:", err)
 		}
 		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
@@ -208,37 +175,28 @@ func main() {
 		}
 
 		log.Info("using recipe: ", recipe.Global.Name)
-		log.Info("mash information: ", recipe.Water)
+		log.Infof("main water: %f -->  grouting: %f", recipe.Water.MainCast, recipe.Water.Grouting)
 
-		if !confirm("start heating hotwater? <y/n>") {
-			os.Exit(0)
-		}
-
-		if kettle.Agitator != nil {
+		if kettle.Agitator != nil && !kettle.Agitator.State() {
 			kettle.Agitator.On()
 		}
-		// InTemperatur
-		if err := kettle.ToTemp(configFile.Global.HotwaterTemperatur); err != nil {
-			log.Fatal(err)
+
+		err = kettle.TempHolder(configFile.Global.HotwaterTemperatur, 0)
+		if err != nil {
+			log.Error(err)
 		}
 
-		// run forever: use os.signals to stop the timer chan,
-		// as parameter chan to write to. And build the Timer on main programm
-		if err := kettle.HoldTemp(configFile.Global.HotwaterTemperatur, time.Duration(1000000*60)*time.Second); err != nil {
-			log.Fatal(err)
-		}
-
-		if kettle.Agitator != nil {
+		if kettle.Agitator != nil && !kettle.Agitator.State() {
 			kettle.Agitator.Off()
 		}
 
 	case "mash start":
 
-		// todo, change this to a *Kattle way :-)
-		kettle, err := KettleInit(configFile.Masher)
-		if err != nil {
+		kettle := &brew.Kettle{}
+		if err = kettle.Init(configFile.Masher); err != nil {
 			log.Fatal("Failed to init Kettle:", err)
 		}
+
 		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
 		if err != nil {
 			log.Error(err)
@@ -252,99 +210,67 @@ func main() {
 			os.Exit(0)
 		}
 
-		if kettle.Agitator != nil {
+		if kettle.Agitator != nil && !kettle.Agitator.State() {
 			kettle.Agitator.On()
 		}
-		// InTemperatur
-		if err := kettle.ToTemp(recipe.Mash.InTemperatur); err != nil {
+		// Call it here because we must wait for input.. this can take a while
+		if err := kettle.TempIncreaseTo(recipe.Mash.InTemperatur); err != nil {
 			log.Fatal(err)
 		}
 
-		if kettle.Agitator != nil {
-			kettle.Agitator.Off()
-		}
-
-		// Give Malts
 		log.Print("Was the malt added? continue: <enter>")
 		if !confirm("malt added? continue? <y/n>") {
-			os.Exit(0)
-		}
-
-		if kettle.Agitator != nil {
-			kettle.Agitator.On()
-		}
-		// Step Rests
-		cnt := 1
-		for _, rast := range recipe.Mash.Rests {
-			log.Infof("Rast %d: Time: %d Temperatur:%f\n", cnt, rast.Time, rast.Temperatur)
-
-			if err := kettle.ToTemp(rast.Temperatur); err != nil {
-				log.Fatal(err)
+			if kettle.Agitator != nil && kettle.Agitator.State() {
+				kettle.Agitator.Off()
 			}
-
-			if err := kettle.HoldTemp(rast.Temperatur, time.Duration(rast.Time*60)*time.Second); err != nil {
-				log.Fatal(err)
-			}
-			cnt++
+			log.Fatal("Abort!")
 		}
-		if kettle.Agitator != nil {
+
+		for num, rast := range recipe.Mash.Rests {
+			log.Infof("Rast %d: Time: %d Temperatur:%f\n", num, rast.Time, rast.Temperatur)
+			err = kettle.TempHolder(rast.Temperatur, time.Duration(rast.Time*60)*time.Second)
+			if err != nil {
+				log.Error(err)
+			}
+		}
+
+		if kettle.Agitator != nil && kettle.Agitator.State() {
 			kettle.Agitator.Off()
 		}
-		log.Info("Finish Mash")
+		log.Info("Mashing finished successful")
 
-	case "mash dummy":
-
-		log.Info("check configfile")
-
-		if configFile.Masher == (config.PodConfig{}) {
-			log.Error("No Masher in config file. You must have a masher to mash :-)")
-			os.Exit(1)
+	case "cook start":
+		kettle := &brew.Kettle{}
+		if err = kettle.Init(configFile.Cooker); err != nil {
+			log.Fatal("Failed to init Kettle:", err)
 		}
 
-		log.Info("check recipe")
 		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
 		if err != nil {
-			log.Error(err)
-			os.Exit(1)
-		}
-		log.Infof("using recipe: %s\n", recipe.Global.Name)
-		log.Infof("mash information:\n%s", recipe.Mash)
-
-		masher := &brew.Kettle{
-			Temp:     &brew.TempDummy{Name: "TempDummy", Fn: func(x float64) float64 { return x + 4.0 }, Temp: 40.0},
-			Heater:   &brew.SSRDummy{},
-			Agitator: &brew.SSRDummy{},
-		}
-		if !confirm("start mashing? <y/n>") {
-			os.Exit(0)
-		}
-
-		// InTemperatur
-		if err := masher.ToTemp(recipe.Mash.InTemperatur); err != nil {
 			log.Fatal(err)
 		}
 
-		// Give Malts
-		if !confirm("malt added? continue? <y/n>") {
+		log.Info("using recipe: ", recipe.Global.Name)
+		log.Info("cook information: ", recipe.Cook)
+
+		if !confirm("start cooking? <y/n>") {
 			os.Exit(0)
 		}
 
-		// Step Rests
-		cnt := 1
-		for _, rast := range recipe.Mash.Rests {
-			log.Infof("Rast %d: Time: %d Temperatur:%f\n", cnt, rast.Time, rast.Temperatur)
-
-			masher.Temp = &brew.TempDummy{Name: "TempDummy", Fn: func(x float64) float64 { return x + 4.0 }, Temp: 40.0}
-			if err := masher.ToTemp(rast.Temperatur); err != nil {
-				log.Fatal(err)
-			}
-			masher.Temp = &brew.TempDummy{Name: "TempDummy", Fn: brew.UpDown, Temp: 55.0}
-			if err := masher.HoldTemp(rast.Temperatur, time.Duration(rast.Time-(rast.Time-4))*time.Second); err != nil {
-				log.Fatal(err)
-			}
-			cnt++
+		if kettle.Agitator != nil && !kettle.Agitator.State() {
+			kettle.Agitator.On()
 		}
-		log.Info("Finish Mash")
-	}
 
+		err = kettle.TempHolder(configFile.Global.CookingTemperatur, time.Duration(recipe.Cook.Time*60)*time.Second)
+		if err != nil {
+			log.Error(err)
+
+		}
+
+		if kettle.Agitator != nil && kettle.Agitator.State() {
+			kettle.Agitator.Off()
+		}
+		log.Info("Cooking finished successful")
+
+	}
 }

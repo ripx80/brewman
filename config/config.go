@@ -30,6 +30,7 @@ type Config struct {
 type GlobalConfig struct {
 	TemperaturUnit     string  `yaml:"temperatur-unit" validate:"regexp=[Cc]elsius|[Kk]elvin"`
 	HotwaterTemperatur float64 `yaml:"hotwater-temperatur" validate:"min=70,max=90"`
+	CookingTemperatur  float64 `yaml:"cooking-temperatur" validate:"min=90,max=110"`
 }
 
 type RecipeConfig struct {
@@ -48,6 +49,7 @@ var (
 	DefaultGlobalConfig = GlobalConfig{
 		TemperaturUnit:     "Celsius",
 		HotwaterTemperatur: 76.0,
+		CookingTemperatur:  97.5,
 	}
 
 	// DefaultPodConfig = PodConfig{

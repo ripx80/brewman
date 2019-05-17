@@ -1,6 +1,7 @@
 global:
   temperatur-unit: Celsius
-  hotwater-temp: 76
+  hotwater-temperatur: 76
+  cooking-temperatur: 97.0
 
 recipe:
   file: /home/rip/go/src/github.com/ripx80/brewman/examples/TagTeamIPA.yaml

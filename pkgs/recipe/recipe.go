@@ -156,3 +156,35 @@ func (r RecipeMash) PrettyPrint() string {
 	}
 	return string(b)
 }
+
+func (r RecipeWater) String() string {
+	b, err := yaml.Marshal(r)
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (r RecipeWater) PrettyPrint() string {
+	b, err := json.MarshalIndent(r, "", "   ")
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (r RecipeCook) String() string {
+	b, err := yaml.Marshal(r)
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
+func (r RecipeCook) PrettyPrint() string {
+	b, err := json.MarshalIndent(r, "", "   ")
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
