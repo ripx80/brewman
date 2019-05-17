@@ -59,54 +59,70 @@ func (k *Kettle) Init(kettleConfig config.PodConfig) error {
 	return nil
 }
 
-//it prints output.. must be implemented in main
-func (k *Kettle) TempIncreaseTo(temp float64) error {
+func (k *Kettle) TempIncreaseTo(tempTo float64) error {
+	var g workgroup.Group
+	signals := make(chan os.Signal, 1)
 
-	var err error
-	var current float64
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	for {
-		if current, err = k.Temp.Get(); err != nil {
-			break
+	g.Add(func(stop <-chan struct{}) error {
+		select {
+		case <-signals:
+		case <-stop:
 		}
+		return fmt.Errorf("stopped")
+	})
 
-		if current >= temp {
-			break
-		}
-		fmt.Printf("%f --> %f On: %t\n", current, temp, k.Heater.State())
-		if current < temp {
-			if !k.Heater.State() {
-				k.Heater.On()
+	// worker thread
+	g.Add(func(stop <-chan struct{}) error {
+		var (
+			temp float64
+			err  error
+		)
+		for {
+			select {
+			case <-stop:
+				fmt.Println("cleaning up")
+				if k.Heater.State() {
+					k.Heater.Off()
+				}
+				return fmt.Errorf("terminated")
+			case <-time.After(1 * time.Second):
+				if temp, err = k.TempWatch(tempTo); err != nil {
+					return err
+				}
+				if temp >= tempTo {
+					if k.Heater.State() {
+						k.Heater.Off()
+					}
+					return nil
+				}
+				//implement global log interface
+				fmt.Printf("Increase: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
 			}
 		}
-		// sleep interval as config value
-		time.Sleep(2 * time.Second)
-	}
-	k.Heater.Off()
-	return err
+	})
+	return g.Run()
 }
 
-func (k *Kettle) TempHolder(tempTo float64, t time.Duration) error {
+func (k *Kettle) TempHolder(tempTo float64, holdTime time.Duration) error {
 	var g workgroup.Group
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	if err := k.TempIncreaseTo(tempTo); err != nil {
-		return err
-	}
-
 	timeout := make(<-chan time.Time, 1) // placeholder for timer
-	if t > 0 {
-		timeout = time.After(t)
+	if holdTime > 0 {
+		timeout = time.After(holdTime)
 	}
 
 	g.Add(func(stop <-chan struct{}) error {
 		select {
 		case <-timeout:
+			return nil // this works for hold time.. not for realy timeouts
 		case <-signals:
 		case <-stop:
 		}
-		return nil
+		return fmt.Errorf("stopped")
 	})
 
 	// worker thread
@@ -121,7 +137,7 @@ func (k *Kettle) TempHolder(tempTo float64, t time.Duration) error {
 				if k.Heater.State() {
 					k.Heater.Off()
 				}
-				return nil
+				return fmt.Errorf("stopped")
 			case <-time.After(1 * time.Second):
 				if temp, err = k.TempWatch(tempTo); err != nil {
 					return err

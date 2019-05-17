@@ -181,11 +181,15 @@ func main() {
 			kettle.Agitator.On()
 		}
 
-		err = kettle.TempHolder(configFile.Global.HotwaterTemperatur, 0)
-		if err != nil {
-			log.Error(err)
+		if err := kettle.TempIncreaseTo(configFile.Global.HotwaterTemperatur); err != nil {
+			log.Fatal(err)
 		}
 
+		err = kettle.TempHolder(configFile.Global.HotwaterTemperatur, 0)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// do this in a cleanup func *kettle.cleanup()
 		if kettle.Agitator != nil && !kettle.Agitator.State() {
 			kettle.Agitator.Off()
 		}
@@ -228,6 +232,9 @@ func main() {
 
 		for num, rast := range recipe.Mash.Rests {
 			log.Infof("Rast %d: Time: %d Temperatur:%f\n", num, rast.Time, rast.Temperatur)
+			if err := kettle.TempIncreaseTo(configFile.Global.HotwaterTemperatur); err != nil {
+				log.Error(err)
+			}
 			err = kettle.TempHolder(rast.Temperatur, time.Duration(rast.Time*60)*time.Second)
 			if err != nil {
 				log.Error(err)
@@ -261,9 +268,13 @@ func main() {
 			kettle.Agitator.On()
 		}
 
+		if err := kettle.TempIncreaseTo(configFile.Global.HotwaterTemperatur); err != nil {
+			log.Fatal(err)
+		}
+
 		err = kettle.TempHolder(configFile.Global.CookingTemperatur, time.Duration(recipe.Cook.Time*60)*time.Second)
 		if err != nil {
-			log.Error(err)
+			log.Fatal(err)
 
 		}
 
