@@ -72,6 +72,7 @@ func (k *Kettle) TempIncreaseTo(tempTo float64) error {
 		}
 		return fmt.Errorf("stopped")
 	})
+	// move the lines above to cmd. and create a single func for g.Add()
 
 	// worker thread
 	g.Add(func(stop <-chan struct{}) error {
