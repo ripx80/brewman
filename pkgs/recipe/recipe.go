@@ -14,6 +14,7 @@ type Recipe struct {
 	Mash         RecipeMash         `json:"Mash"`
 	Cook         RecipeCook         `json:"Cook"`
 	Fermentation RecipeFermentation `json:"Fermentation"`
+	Comment      []RecipeComment    `json:"Comments"`
 	original     string
 }
 
@@ -61,6 +62,13 @@ type RecipeFermentation struct {
 	Hops        []Hop        // Stopfhopfen
 	Ingredients []Ingredient // Weitere Zutaten
 }
+
+type RecipeComment struct {
+	Name    string
+	Date    string
+	Comment string
+}
+
 type RecipeUnit struct {
 	Name   string
 	Amount float64

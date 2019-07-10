@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 )
 
@@ -28,6 +29,7 @@ type RecipeM3Global struct {
 	Color             int     `json:"Farbe,string"`
 	Alcohol           float64 `json:"Alkohol"`
 	ShortDescription  string  `json:"Kurzbeschreibung"`
+	Annotation        string  `json:"Anmerkung_Autor,string"`
 }
 
 type RecipeM3 struct {
@@ -39,11 +41,12 @@ type RecipeM3 struct {
 	Grouting      float64 `json:"Nachguss,string"`
 	Time          int     `json:"Kochzeit_Wuerze,string"`
 	Yeast         string  `json:"Hefe"`
-	Temperatur    float64 `json:"Gaertemperatur,string"` // json field values has 24-25 as string, not supported
-	EndDegree     float64 `json:"Endvergaerungsgrad,string"`
-	Carbonation   float64 `json:"Karbonisierung,string"`
-	Annotation    string  `json:"Anmerkung_Autor"`
+	//Temperatur    float64 `json:"Gaertemperatur,string"` // json field values has 24-25 as string, not supported
+	EndDegree   float64 `json:"Endvergaerungsgrad,string"`
+	Carbonation float64 `json:"Karbonisierung,string"`
+	Annotation  string  `json:"Anmerkung_Autor"`
 
+	Temperatur   float64
 	Malts        []Malt
 	Rests        []Rest
 	FontHops     []Hop
@@ -73,6 +76,7 @@ func (rm *RecipeM3) Load(s string) (*Recipe, error) {
 		Color:             rm.Color,
 		Alcohol:           rm.Alcohol,
 		ShortDescription:  rm.ShortDescription,
+		Annotation:        rm.Annotation,
 	}
 
 	recipe.Water = RecipeWater{
@@ -139,6 +143,17 @@ func (rm *RecipeM3) UnmarshalJSON(data []byte) error {
 	}
 
 	conv := &Converter{}
+	// add a test file for this
+	// in this field are different values. normalize...
+
+	re := regexp.MustCompile("[0-9]+")
+	x := re.FindAllString(result["Gaertemperatur"].(string), -1)
+	var f float64
+	for _, value := range x {
+		f, err = strconv.ParseFloat(value, 64)
+		rm.Temperatur += f
+	}
+	rm.Temperatur = rm.Temperatur / float64(len(x))
 	conv.cmap = result
 	conv.keys = map[string]string{"Name": "Malz%d", "Amount": "Malz%d_Menge", "Unit": "Malz%d_Einheit"}
 	rm.Malts, err = conv.Malts()
