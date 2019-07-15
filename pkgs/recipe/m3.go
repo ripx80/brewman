@@ -51,7 +51,7 @@ type RecipeM3 struct {
 	Rests        []Rest
 	FontHops     []Hop
 	Hops         []Hop
-	Whirpool     []Hop
+	Whirlpool    []Hop
 	Ingredients  []Ingredient
 	Fermentation RecipeFermentation
 }
@@ -96,7 +96,7 @@ func (rm *RecipeM3) Load(s string) (*Recipe, error) {
 		Ingredients: rm.Ingredients,
 		FontHops:    rm.FontHops,
 		Hops:        rm.Hops,
-		Whirpool:    rm.Whirpool,
+		Whirlpool:   rm.Whirlpool,
 	}
 
 	recipe.Fermentation = RecipeFermentation{
@@ -180,7 +180,7 @@ func (rm *RecipeM3) UnmarshalJSON(data []byte) error {
 	}
 
 	conv.keys = map[string]string{"Name": "Hopfen_%d_Sorte", "Amount": "Hopfen_%d_Menge", "Time": "Hopfen_%d_Kochzeit", "Alpha": "Hopfen_%d_alpha"}
-	rm.Whirpool, err = conv.WhirpoolHop()
+	rm.Whirlpool, err = conv.WhirlpoolHop()
 	if err != nil {
 		return err
 	}
@@ -440,7 +440,7 @@ func (con *Converter) Hop() ([]Hop, error) {
 	return Hops, nil
 }
 
-func (con *Converter) WhirpoolHop() ([]Hop, error) {
+func (con *Converter) WhirlpoolHop() ([]Hop, error) {
 	var Hops []Hop
 	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
 		con.pos = i

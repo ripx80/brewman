@@ -21,6 +21,14 @@ import (
 )
 
 /*
+ES stuff
+curl --user elastic:changeme -XPOST http://node1:9200/recipes-m3/doc -H "Content-Type: application/json" -d @400_Meraner_Weizen.json
+for i in $(ls):; do curl --user elastic:changeme -XPOST http://node1:9200/recipes-m3/doc -H "Content-Type: application/json" -d @$i; done
+
+PUT hockey/_bulk?refresh
+{"index":{"_id":1}}
+{"first":"johnny","last":"gaudreau","goals":[9,27,1],"assists":[17,46,0],"gp":[26,82,1],"born":"1993/08/13"}
+{"index":{"_id":2}}
 
 
 https://beerandbrewing.com/beer-recipes/
@@ -38,7 +46,28 @@ Parsing Amount error: Infusion_Rastzeit2 strconv.Atoi: parsing "7.5": invalid sy
 
 
 get term aggs for Malts. Then convert the Data like: "Pilsener" and "Pilsener Malz" zu "Pilsener"
+
+- convert Pilsner Malz, Pilsner, Pilsener, Pilsenermalz, (Pilsenermalz, hell) to Pilsener Malz with data pipelines in es
+- Pale Ale, Pale ale Malz, Best Pale Ale Malz-> Pale Ale Malz
+- Münchener, Münchner Malz -> Münchener Malz
+- Wiener, Wienermalz -> Wiener Malz
+- Weizenmalz hell, (Weizenmalz, hell), Weizenmalz Hell -> Weizenmalz
+- Carahell, CaraHell, Cara Hell
+- CaraMünch II, Cara II
+- CaraAmber, Cara Amber
+- Amber Malz, Amber Malt
+- Best Röstmalz -> Röstmalz
+- Best Red X -> Red X
+
+
+
+
 find duplicates with elastic search and remove them: https://www.elastic.co/de/blog/how-to-find-and-remove-duplicate-documents-in-elasticsearch
+
+
+
+
+
 
 */
 

@@ -51,7 +51,7 @@ type RecipeCook struct {
 	Ingredients []Ingredient // Weitere Zutaten
 	FontHops    []Hop        // Vorderhopfen
 	Hops        []Hop
-	Whirpool    []Hop
+	Whirlpool   []Hop
 }
 
 type RecipeFermentation struct {
