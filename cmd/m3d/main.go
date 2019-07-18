@@ -1,99 +1,22 @@
 package main
 
 import (
-	"bufio"
+	"flag"
 	"fmt"
-	"io"
-
 	"io/ioutil"
 	"log"
 	"net/http"
-	"regexp"
+	"net/url"
+	"os"
+	"os/signal"
+	"path"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	strip "github.com/grokify/html-strip-tags-go"
-	"golang.org/x/net/html/charset"
-	"golang.org/x/text/encoding/htmlindex"
-
 	"github.com/ripx80/brewman/pkgs/recipe"
 )
-
-/*
-ES stuff
-curl --user elastic:changeme -XPOST http://node1:9200/recipes-m3/doc -H "Content-Type: application/json" -d @400_Meraner_Weizen.json
-for i in $(ls):; do curl --user elastic:changeme -XPOST http://node1:9200/recipes-m3/doc -H "Content-Type: application/json" -d @$i; done
-
-PUT hockey/_bulk?refresh
-{"index":{"_id":1}}
-{"first":"johnny","last":"gaudreau","goals":[9,27,1],"assists":[17,46,0],"gp":[26,82,1],"born":"1993/08/13"}
-{"index":{"_id":2}}
-
-
-https://beerandbrewing.com/beer-recipes/
-https://beerrecipes.org/
-https://www.kaggle.com/jtrofe/beer-recipes (https://www.brewersfriend.com/search/)
-https://www.brewerydb.com/developers
-https://www.brewerydb.com/developers/docs/ (API)
-https://github.com/homebrewing/tapline
-http://www.malt.io/
-
-Parsing Amount error: Hopfen_VWH_1_Menge strconv.ParseFloat: parsing " 90": invalid syntax
-json: invalid use of ,string struct tag, trying to unmarshal "" into float64
-Rest value is empty: Infusion_Rastzeit4
-Parsing Amount error: Infusion_Rastzeit2 strconv.Atoi: parsing "7.5": invalid syntax
-
-
-get term aggs for Malts. Then convert the Data like: "Pilsener" and "Pilsener Malz" zu "Pilsener"
-
-- convert Pilsner Malz, Pilsner, Pilsener, Pilsenermalz, (Pilsenermalz, hell) to Pilsener Malz with data pipelines in es
-- Pale Ale, Pale ale Malz, Best Pale Ale Malz-> Pale Ale Malz
-- Münchener, Münchner Malz -> Münchener Malz
-- Wiener, Wienermalz -> Wiener Malz
-- Weizenmalz hell, (Weizenmalz, hell), Weizenmalz Hell -> Weizenmalz
-- Carahell, CaraHell, Cara Hell
-- CaraMünch II, Cara II
-- CaraAmber, Cara Amber
-- Amber Malz, Amber Malt
-- Best Röstmalz -> Röstmalz
-- Best Red X -> Red X
-
-
-
-
-find duplicates with elastic search and remove them: https://www.elastic.co/de/blog/how-to-find-and-remove-duplicate-documents-in-elasticsearch
-
-
-
-
-
-
-*/
-
-func detectContentCharset(body io.Reader) string {
-	r := bufio.NewReader(body)
-	if data, err := r.Peek(1024); err == nil {
-		if _, name, ok := charset.DetermineEncoding(data, ""); ok {
-			return name
-		}
-	}
-	return "utf-8"
-}
-
-func DecodeHTMLBody(body io.Reader, charset string) (io.Reader, error) {
-	if charset == "" {
-		charset = detectContentCharset(body)
-	}
-	e, err := htmlindex.Get(charset)
-	if err != nil {
-		return nil, err
-	}
-	if name, _ := htmlindex.Name(e); name != "utf-8" {
-		body = e.NewDecoder().Reader(body)
-	}
-	return body, nil
-}
 
 func rmChar(input string, characters string) string {
 	filter := func(r rune) rune {
@@ -116,30 +39,53 @@ func inSlice(a int, list []int) bool {
 	return false
 }
 
-func getUserComments(recipeID int) *[]recipe.RecipeComment {
+func getLastID(baseURL string) (int, error) {
+	resp, err := http.Get(baseURL)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+	link, ex := doc.Find(".rezeptlink").Eq(0).Attr("href")
+	if !ex {
+		return 0, fmt.Errorf("canot find the last id")
+	}
+	base, err := url.Parse(link)
+	if err != nil {
+		return 0, err
+	}
+
+	keys, ok := base.Query()["id"]
+	if !ok {
+		return 0, fmt.Errorf("no id extraction from index url")
+	}
+	lid, err := strconv.Atoi(keys[0])
+	return lid, nil
+}
+
+func getUserComments(recipeID int) (*[]recipe.RecipeComment, error) {
 	var comments []recipe.RecipeComment
 
 	resp, err := http.Get(fmt.Sprintf("https://www.maischemalzundmehr.de/index.php?id=%d&inhaltmitte=rezept", recipeID))
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := DecodeHTMLBody(resp.Body, "")
-	if err != nil {
-		fmt.Println("error")
-	}
 
-	doc, err := goquery.NewDocumentFromReader(body)
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatal("Error loading HTTP response body. ", err)
+		return nil, err
 	}
 
 	doc.Find("div.userkommentare").Each(func(i int, s *goquery.Selection) {
 		child := s.Find("p").Contents()
 		name := strip.StripTags(child.Eq(1).Text())
 		datetime := strings.Split(rmChar(strip.StripTags(child.Eq(2).Text()), " \n"), "-")
-		comment := rmChar(strip.StripTags(s.Find("p").Next().Text()), "\n")
+		comment := strings.TrimSpace(strings.ReplaceAll(strip.StripTags(s.Find("p").Next().Text()), "\n", " "))
 		comments = append(comments, recipe.RecipeComment{
 			Name:    name[5:],
 			Date:    datetime[0],
@@ -147,80 +93,99 @@ func getUserComments(recipeID int) *[]recipe.RecipeComment {
 		})
 	})
 
-	return &comments
+	return &comments, nil
 }
 
-func main() {
+const m3url = "https://www.maischemalzundmehr.de"
+const endmsg = "\n\nFetch: %d doc\nBroken docs: %d\n"
 
-	files, err := ioutil.ReadDir("recipes/")
+func main() {
+	outdir := flag.String("output", "recipes", "output dir. if not exists it will be created")
+	flag.Parse()
+
+	if _, err := os.Stat(*outdir); os.IsNotExist(err) {
+		os.Mkdir(*outdir, 0755)
+	}
+
+	// simple check if some recipes downloaded before
+	files, err := ioutil.ReadDir(*outdir)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	var keymap []int
-	var id int
 	for _, f := range files {
-		id, err = strconv.Atoi(strings.Split(f.Name(), "_")[0])
+		id, err := strconv.Atoi(strings.Split(f.Name(), "_")[0])
 		if err == nil {
 			keymap = append(keymap, id)
 		}
 	}
 
-	exportUrl := "https://www.maischemalzundmehr.de/export.php?id="
-
-	resp, err := http.Get("https://www.maischemalzundmehr.de/index.php")
+	lid, err := getLastID(fmt.Sprintf("%s/index.php", m3url))
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
 
-	re := regexp.MustCompile(`<a class="rezeptlink" href="index.php\?id=(?P<id>\d+)\&inhaltmitte=rezept">`)
-	match := re.FindStringSubmatch(string(body))
-
-	lid, err := strconv.Atoi(match[1])
 	cnt := 0
 	errcnt := 0
+	var body []byte
 
-	for lid > 0 {
+	//signal handling
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		log.Printf(endmsg, cnt, errcnt)
+		os.Exit(0)
+		return
+	}()
+
+	for ; lid > 0; lid-- {
 		if inSlice(lid, keymap) {
-			lid--
 			continue
 		}
 
 		//get json export
-		resp, err = http.Get(fmt.Sprintf("%s%d", exportUrl, lid))
+		resp, err := http.Get(fmt.Sprintf("%s/export.php?id=%d", m3url, lid))
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			return
 		}
 		defer resp.Body.Close()
 		body, err = ioutil.ReadAll(resp.Body)
-		if len(body) != 471 {
-			cnt++
-			pp := &recipe.RecipeM3{}
 
-			recipe, err := pp.Load(string(body))
-			if err != nil {
-				errcnt++
-				ioutil.WriteFile(fmt.Sprintf("broken/%d.json", lid), body, 0644)
-				fmt.Println(err)
-				lid--
-				continue
-			}
-
-			fn := strings.ReplaceAll(recipe.Global.Name, " ", "_")
-			fn = rmChar(fn, "?%$&#-`'().")
-
-			//get comments
-			recipe.Comment = *getUserComments(lid)
-
-			recipe.SavePretty(fmt.Sprintf("recipes/%d_%s.json", lid, fn))
-			fmt.Println(recipe.Global.Name)
+		//empty json
+		if len(body) <= 471 {
+			continue
 		}
 
-		lid--
+		cnt++
+		recipe, err := (&recipe.RecipeM3{}).Load(string(body))
+		if err != nil {
+			errcnt++
+			broken := path.Join(*outdir, "broken")
+			if _, err := os.Stat(broken); os.IsNotExist(err) {
+				os.Mkdir(broken, 0755)
+			}
+			ioutil.WriteFile(path.Join(broken, fmt.Sprintf("%d.json", lid)), body, 0644)
+			log.Println(err)
+			continue
+		}
+
+		fn := strings.ReplaceAll(recipe.Global.Name, " ", "_")
+		fn = rmChar(fn, "?%$&#-`'().")
+
+		//get comments
+		c, err := getUserComments(lid)
+		if err != nil {
+			log.Fatal("usercomments: ", err)
+		}
+		recipe.Comment = *c
+
+		recipe.SavePretty(path.Join(*outdir, fmt.Sprintf("%d_%s.json", lid, fn)))
+		log.Println(recipe.Global.Name)
+
 	}
-	fmt.Printf("Fetch %d documents\nError on Fetch %d\n", cnt, errcnt)
+	log.Printf(endmsg, cnt, errcnt)
 
 }
