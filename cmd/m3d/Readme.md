@@ -7,13 +7,25 @@ Get all recipes from m3 and convert it to brewman recipe json format. If you hav
 Get more recipes and convert to brewman format
 
 ```plain
-https://beerandbrewing.com/beer-recipes/
-https://beerrecipes.org/
-https://www.kaggle.com/jtrofe/beer-recipes (https://www.brewersfriend.com/search/)
+https://beersmithrecipes.com/ (very big community! own format bsmx (just xml), must login for download recipes, no api )
+    https://beersmithrecipes.com/viewrecipe/2589508 id counting, and export
+    https://beersmithrecipes.com/download.php?id=2589508
+
+https://beerandbrewing.com/beer-recipes/ (Beersmith and BeerXML version. Must subscribe )
+https://beerrecipes.org/ (4495 recipes)
+    https://beerrecipes.org/Recipe/1167 count id ;-), no export -.-
+
+https://www.brewersfriend.com/
+    https://www.brewersfriend.com/homebrew/recipe/view/1633 id counting,
+    https://www.brewersfriend.com/homebrew/recipe/beerxml1.0/1633 export
+
+
 https://www.brewerydb.com/developers
 https://www.brewerydb.com/developers/docs/ (API)
 https://github.com/homebrewing/tapline
-http://www.malt.io/
+http://www.malt.io/ (xml export, all recipes, get links and add beerxml to download xml)
+    http://www.malt.io/users/david/recipes/the-duvel-s-in-the-details-belgian-golden-strong/beerxml but xml is very bad. no water aso
+
 ```
 
 ## Broken json
