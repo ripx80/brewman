@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/heptio/workgroup"
 	"github.com/ripx80/brewman/config"
 	"github.com/ripx80/brewman/pkgs/brew"
 	"github.com/ripx80/brewman/pkgs/recipe"
@@ -66,7 +69,7 @@ func main() {
 	a := kingpin.New("brewman", "A command-line brew application")
 	a.Version("1.0")
 	a.HelpFlag.Short('h')
-	a.Author("Ripx80")
+	a.Author("https://github/ripx80")
 
 	a.Flag("config.file", "brewman configuration file path.").
 		StringVar(&cfg.configFile)
@@ -89,7 +92,6 @@ func main() {
 
 	sc = a.Command("mash", "mash brew steps")
 	sc.Command("start", "start the mash precedure")
-	sc.Command("dummy", "dummy the mash precedure")
 
 	sc = a.Command("hotwater", "make hotwater in kettle")
 	sc.Command("start", "start the hotwater precedure")
@@ -181,6 +183,24 @@ func main() {
 			kettle.Agitator.On()
 		}
 
+		var g workgroup.Group
+		signals := make(chan os.Signal, 1)
+
+		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
+		g.Add(func(stop <-chan struct{}) error {
+			select {
+			case <-signals:
+			case <-stop:
+			}
+			return fmt.Errorf("stopped")
+		})
+
+		kettle.TempIncreaseToGroup(g, configFile.Global.HotwaterTemperatur)
+		if g.Run() != nil {
+			return
+		}
+
 		if err := kettle.TempIncreaseTo(configFile.Global.HotwaterTemperatur); err != nil {
 			log.Fatal(err)
 		}
@@ -222,7 +242,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		log.Print("Was the malt added? continue: <enter>")
 		if !confirm("malt added? continue? <y/n>") {
 			if kettle.Agitator != nil && kettle.Agitator.State() {
 				kettle.Agitator.Off()
@@ -232,7 +251,7 @@ func main() {
 
 		for num, rast := range recipe.Mash.Rests {
 			log.Infof("Rast %d: Time: %d Temperatur:%f\n", num, rast.Time, rast.Temperatur)
-			if err := kettle.TempIncreaseTo(configFile.Global.HotwaterTemperatur); err != nil {
+			if err := kettle.TempIncreaseTo(rast.Temperatur); err != nil {
 				log.Error(err)
 			}
 			err = kettle.TempHolder(rast.Temperatur, time.Duration(rast.Time*60)*time.Second)
@@ -268,7 +287,7 @@ func main() {
 			kettle.Agitator.On()
 		}
 
-		if err := kettle.TempIncreaseTo(configFile.Global.HotwaterTemperatur); err != nil {
+		if err := kettle.TempIncreaseTo(configFile.Global.CookingTemperatur); err != nil {
 			log.Fatal(err)
 		}
 

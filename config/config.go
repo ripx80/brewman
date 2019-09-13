@@ -7,14 +7,25 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// add a general type for all. add validator func for supported devices
 type TemperaturConfig struct {
 	Device  string `yaml:"device" validate:"nonzero"`  // only ds18b20 supp.
 	Address string `yaml:"address" validate:"nonzero"` // path to sys file. its bad i know
 }
 
+type ControlConfig struct {
+	Device  string `yaml:"device" validate:"nonzero"`
+	Address string `yaml:"address" validate:"min=0,max=40,nonzero"`
+}
+
+type AgiatorConfig struct {
+	Device  string `yaml:"device"`
+	Address string `yaml:"address" validate:"min=0,max=40`
+}
+
 type PodConfig struct {
-	Control    string `yaml:"control" validate:"min=0,max=40,nonzero"`
-	Agiator    string `yaml:"agiator" validate:"min=0,max=40"`
+	Control    ControlConfig
+	Agiator    AgiatorConfig
 	Temperatur TemperaturConfig
 }
 type Config struct {

@@ -24,8 +24,16 @@ type DS18B20 struct {
 
 type TempDummy struct {
 	Name string
-	Fn   callback
 	Temp float64
+	fn   func() bool
+}
+
+func Down(x float64) float64 {
+	return x - 3
+}
+
+func Up(x float64) float64 {
+	return x + 3
 }
 
 func UpDown(x float64) float64 {
@@ -35,10 +43,16 @@ func UpDown(x float64) float64 {
 	return x - 3.0
 }
 
-type callback func(float64) float64
-
 func (td *TempDummy) Get() (float64, error) {
-	td.Temp = td.Fn(td.Temp)
+
+	if td.fn() {
+		td.Temp = Up(td.Temp)
+	}
+
+	if !td.fn() {
+		td.Temp = Down(td.Temp)
+	}
+
 	if td.Temp < 0 {
 		return 0, fmt.Errorf("negative value detected")
 	}

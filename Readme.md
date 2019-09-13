@@ -23,8 +23,11 @@
 - [x] save config
 - [x] convert, save and read recipe
 - [x] build cmd tool for convert m3 recipes
-- [ ] change dep to go modules
-- [ ] TempWatcher, Temp.Get(), targetTemp, Hold Time
+- [x] change dep to go modules
+- [x] add dummy mode
+- [ ] try run (check all pins, heat cattle for 2*C)
+- [ ] check recipe, all nessecary values set. no negative and creepy values?
+- [x] TempWatcher, Temp.Get(), targetTemp, Hold Time
 - [ ] convert all yaml packages to one (recipe, config)
 - [ ] build Makefile
 - [ ] Control all on/off switch
@@ -278,3 +281,8 @@ The pin numbering used by your Gobot program should match the way your board is 
 
 
 https://github.com/stone/beerxml 5yeas ago -.-
+
+support only one temp at the moment and gpio pin control (ssr)
+config values of bus is string because periph need a string input: 40, PWM0, GPIO40 are the same
+
+if you set value "dummy" as device type you are in dummy mode

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	//yaml "gopkg.in/yaml.v2"
 	"github.com/ghodss/yaml"
 )
 
