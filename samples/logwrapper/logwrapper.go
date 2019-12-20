@@ -4,6 +4,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// type Logger interface {
+// 	Log(v ...interface{})
+// 	Logf(format string, v ...interface{})
+// }
+
 type Event struct {
 	id      int
 	message string

@@ -25,17 +25,20 @@
 - [x] build cmd tool for convert m3 recipes
 - [x] change dep to go modules
 - [x] add dummy mode
-- [ ] try run (check all pins, heat cattle for 2*C)
-- [ ] check recipe, all nessecary values set. no negative and creepy values?
 - [x] TempWatcher, Temp.Get(), targetTemp, Hold Time
-- [ ] convert all yaml packages to one (recipe, config)
+- [x] one log handler with logrus. in lib also
+- [x] os signal handling. Turn off all controls
+- [x] Control all on/off switch
 - [ ] build Makefile
-- [ ] Control all on/off switch
-- [ ] os signal handling. Turn off all controls
+- [ ] convert all yaml packages to one (recipe, config)
+
+0.2
+
+- [ ] try run (check all pins, heat cattle for 2*C)
+- [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
+
 
 ## Bug Fixes
-
-- [ ] check if recipe verify values in recipe!
 
 ## Units
 
@@ -83,6 +86,13 @@ Valves not supproted yet
 ### Fermentation
 
 - Info About Fermentation
+
+### Yaml
+
+Todo: only use one of the libs.
+
+Using ghodss/yaml and not the pure go-yaml/yaml.
+In short, this library first converts YAML to JSON using go-yaml and then uses json.Marshal and json.Unmarshal to convert to or from the struct. This means that it effectively reuses the JSON struct tags as well as the custom JSON methods MarshalJSON and UnmarshalJSON unlike go-yaml
 
 ### Implementation
 

@@ -3,21 +3,14 @@ package brew
 import (
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
-	"github.com/heptio/workgroup"
 	"github.com/ripx80/brewman/config"
+	log "github.com/sirupsen/logrus"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
 )
-
-type Logger interface {
-	Log(v ...interface{})
-	Logf(format string, v ...interface{})
-}
 
 type Kettle struct {
 	Temp     TempSensor
@@ -25,28 +18,22 @@ type Kettle struct {
 	Agitator Control
 }
 
+/*
+supported sensors
+	dummy (dev mode)
+	GPIO SSR (control over gpio pins)
+	GPIO Temp (ds18b20)
+*/
 func (k *Kettle) Init(kettleConfig config.PodConfig) error {
 
 	if kettleConfig == (config.PodConfig{}) {
 		return fmt.Errorf("no podconfig in config file. you must have a podconfig to mash/hotwater/cooking")
 	}
-
-	/*
-		supported sensors
-			dummy (dev mode)
-			GPIO SSR (control over gpio pins)
-			GPIO Temp (ds18b20)
-
-	*/
 	_, err := host.Init()
 	if err != nil {
 		return fmt.Errorf("failed to initialize periph: %v", err)
 	}
 
-	// setup devices
-
-	//Heater
-	// add a better switch satement
 	var p gpio.PinIO
 
 	if kettleConfig.Control.Device == "dummy" {
@@ -92,131 +79,83 @@ func (k *Kettle) Init(kettleConfig config.PodConfig) error {
 	return nil
 }
 
-func (k *Kettle) TempIncreaseToGroup(group workgroup.Group, tempTo float64) error {
-	group.Add(func(stop <-chan struct{}) error {
-		var (
-			temp float64
-			err  error
-		)
-		for {
-			select {
-			case <-stop:
-				fmt.Println("cleaning up")
-				if k.Heater.State() {
-					k.Heater.Off()
-				}
-				return fmt.Errorf("terminated")
-			case <-time.After(1 * time.Second):
-				if temp, err = k.TempWatch(tempTo); err != nil {
-					return err
-				}
-				if temp >= tempTo {
-					if k.Heater.State() {
-						k.Heater.Off()
-					}
-					return nil
-				}
-				//implement global log interface
-				fmt.Printf("Increase: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
-			}
-		}
-	})
+func (k *Kettle) On() {
+	if k.Agitator != nil && !k.Agitator.State() {
+		k.Agitator.On()
+	}
 
-	return group.Run()
+	if k.Heater != nil && !k.Heater.State() {
+		k.Heater.On()
+	}
 }
 
-func (k *Kettle) TempIncreaseTo(tempTo float64) error {
-	var g workgroup.Group
-	signals := make(chan os.Signal, 1)
+func (k *Kettle) Cleanup() {
+	if k.Agitator != nil && !k.Agitator.State() {
+		k.Agitator.Off()
+	}
 
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	if k.Heater != nil && !k.Heater.State() {
+		k.Heater.Off()
+	}
+}
 
-	g.Add(func(stop <-chan struct{}) error {
+func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
+	var (
+		temp float64
+		err  error
+	)
+	for {
 		select {
-		case <-signals:
 		case <-stop:
-		}
-		return fmt.Errorf("stopped")
-	})
-	// move the lines above to cmd. and create a single func for g.Add()
-
-	// worker thread
-	g.Add(func(stop <-chan struct{}) error {
-		var (
-			temp float64
-			err  error
-		)
-		for {
-			select {
-			case <-stop:
-				fmt.Println("cleaning up")
+			if k.Heater.State() {
+				k.Heater.Off()
+			}
+			return nil
+		case <-time.After(1 * time.Second):
+			if temp, err = k.TempWatch(tempTo); err != nil {
+				return err
+			}
+			if temp >= tempTo {
 				if k.Heater.State() {
 					k.Heater.Off()
 				}
-				return fmt.Errorf("terminated")
-			case <-time.After(1 * time.Second):
-				if temp, err = k.TempWatch(tempTo); err != nil {
-					return err
-				}
-				if temp >= tempTo {
-					if k.Heater.State() {
-						k.Heater.Off()
-					}
-					return nil
-				}
-				//implement global log interface
-				fmt.Printf("Increase: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
+				return nil
 			}
+			// use data channel
+			log.Infof("Increase: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
 		}
-	})
-	return g.Run()
+	}
+	return fmt.Errorf("terminated")
 }
 
-func (k *Kettle) TempHolder(tempTo float64, holdTime time.Duration) error {
-	var g workgroup.Group
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-
-	timeout := make(<-chan time.Time, 1) // placeholder for timer
+func (k *Kettle) TempHolder(stop chan struct{}, tempTo float64, holdTime time.Duration) error {
+	var (
+		temp float64
+		err  error
+	)
+	timeout := make(<-chan time.Time, 1) // placeholder for timer, 0 run forever
 	if holdTime > 0 {
 		timeout = time.After(holdTime)
 	}
-
-	g.Add(func(stop <-chan struct{}) error {
+	for {
 		select {
-		case <-timeout:
-			return nil // this works for hold time.. not for realy timeouts
-		case <-signals:
 		case <-stop:
-		}
-		return fmt.Errorf("stopped")
-	})
-
-	// worker thread
-	g.Add(func(stop <-chan struct{}) error {
-		var (
-			temp float64
-			err  error
-		)
-		for {
-			select {
-			case <-stop:
-				if k.Heater.State() {
-					k.Heater.Off()
-				}
-				return fmt.Errorf("stopped")
-			case <-time.After(1 * time.Second):
-				if temp, err = k.TempWatch(tempTo); err != nil {
-					return err
-				}
-				//implement global log interface
-				fmt.Printf("Hold: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
+			if k.Heater.State() {
+				k.Heater.Off()
 			}
+			return nil
+
+		case <-timeout:
+			return nil
+
+		case <-time.After(1 * time.Second):
+			if temp, err = k.TempWatch(tempTo); err != nil {
+				return err
+			}
+			log.Infof("Hold: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
 		}
-	})
-
-	return g.Run()
-
+	}
+	return fmt.Errorf("terminated")
 }
 
 func (k *Kettle) TempWatch(temp float64) (current float64, err error) {
@@ -224,68 +163,12 @@ func (k *Kettle) TempWatch(temp float64) (current float64, err error) {
 		return 0, err
 	}
 	if current < temp && !k.Heater.State() {
-		// log.Debug("Heater Off")
+		log.Debug("Heater Off")
 		k.Heater.On()
 	}
 	if current > temp && k.Heater.State() {
-		// log.Debug("Heater Off")
+		log.Debug("Heater Off")
 		k.Heater.Off()
 	}
 	return
 }
-
-// func (k *Kettle) HoldTempDuration(stop <-chan time.Time, temp float64) error {
-// 	var current float64
-// 	var err error
-// 	for {
-// 		select {
-// 		case <-stop:
-// 			if k.Heater.State() {
-// 				k.Heater.Off()
-// 			}
-
-// 			return nil
-// 		case <-time.After(1 * time.Second):
-// 			if current, err = k.Temp.Get(); err != nil {
-// 				return err
-// 			}
-// 			if current < temp && !k.Heater.State() {
-// 				// log.Debug("Heater Off")
-// 				k.Heater.On()
-// 			}
-// 			if current > temp && k.Heater.State() {
-// 				// log.Debug("Heater Off")
-// 				k.Heater.Off()
-// 			}
-// 			fmt.Printf("Hold: %f --> %f State: %t\n", current, temp, k.Heater.State())
-// 		}
-// 	}
-// }
-
-// func (k *Kettle) HoldTemp(done chan struct{}, temp float64) error {
-// 	var (
-// 		err     error
-// 		current float64
-// 	)
-// 	for {
-// 		select {
-// 		case <-done:
-// 			if k.Heater.State() {
-// 				k.Heater.Off()
-// 			}
-// 			return nil
-// 		case <-time.After(1 * time.Second):
-// 			if current, err = k.Temp.Get(); err != nil {
-// 				return err
-// 			}
-// 			if current < temp && !k.Heater.State() {
-// 				// log.Debug("Heater Off")
-// 				k.Heater.On()
-// 			}
-// 			if current > temp && k.Heater.State() {
-// 				// log.Debug("Heater Off")
-// 				k.Heater.Off()
-// 			}
-// 		}
-// 	}
-// }

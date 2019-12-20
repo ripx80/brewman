@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v2"
+	//"github.com/ghodss/yaml"
 )
 
 // add a general type for all. add validator func for supported devices
