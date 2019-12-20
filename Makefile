@@ -23,11 +23,11 @@ all: fmt | $(BIN) ; $(info $(M) building executable…) @ ## Build program binar
 	$Q $(GO) build \
 		-tags release \
 		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $(BIN)/$(basename $(MODULE)) cmd/brewman/main.go; \
+		-o $(BIN)/brewman cmd/brewman/main.go; \
 	$(GOARM) $(GO) build \
 		-tags release \
 		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $(BIN)/$(basename $(MODULE))_arm cmd/brewman/main.go; \
+		-o $(BIN)/brewman_arm cmd/brewman/main.go; \
 	$(GO) build \
 		-tags release \
 		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
