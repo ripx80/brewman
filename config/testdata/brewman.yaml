@@ -1,0 +1,31 @@
+global:
+  temperatur-unit: Celsius
+  hotwater-temperatur: 76
+  cooking-temperatur: 97.0
+
+recipe:
+  file: /home/rip/go/src/github.com/ripx80/brewman/examples/TagTeamIPA.yaml
+
+# support only one temp at the moment and gpio pin control (ssr)
+## config values of bus is string because periph need a string input: 40, PWM0, GPIO40 are the same
+hotwater:
+  temperatur:
+    device: "ds18b20"
+    address: "/sys/bus/w1/devices/28-0416c5040bff/w1_slave"
+  control: "3"
+masher:
+  control: "17"
+  #agiator: "27"
+  temperatur:
+    device: "ds18b20"
+    address: "/sys/bus/w1/devices/28-0416c4dec6ff/w1_slave"
+cooker:
+  temperatur:
+    device: "ds18b20"
+    address: "/sys/bus/w1/devices/28-0316c2d550ff/w1_slave"
+  control: "30"
+
+#28-0
+
+
+

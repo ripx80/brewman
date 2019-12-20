@@ -1,5 +1,17 @@
 # Brewman
 
+## Setup
+
+```bash
+make help; make # ;-)
+```
+
+You will find your executables in bin
+
+brewman - Brewery Helper
+m3c - Maische-Malz-und-Mehr recipe converter
+m3d - Maische-Malz-und-Mehr recipe downloader
+
 ## Features
 
 - Log: logger to console, file, socket: Yes with MultipleWriter.
@@ -13,10 +25,6 @@
 
 ## Roadmap
 
-- Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
-- Metric Exporter: Prometheus, NodeExporter and internal
-- Tests
-
 0.1
 
 - [x] read config
@@ -29,13 +37,25 @@
 - [x] one log handler with logrus. in lib also
 - [x] os signal handling. Turn off all controls
 - [x] Control all on/off switch
-- [ ] build Makefile
-- [ ] convert all yaml packages to one (recipe, config)
+- [x] convert all yaml packages to one (recipe, config)
+- [x] build Makefile
 
 0.2
 
-- [ ] try run (check all pins, heat cattle for 2*C)
+- [ ] recipies: calculate other water/size informations
+- [ ] add more debug informations
+- [ ] add all test files, use testify and testify/mocking
+- [ ] add data channel to lib
+- [ ] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
+- [ ] remove in mash config dep
+- [ ] document exported funcs, check private
+
+0.3
+
+- [ ] Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
+- [ ] Metric Exporter: Prometheus, NodeExporter and internal
+- [ ] use interactive mode - use a fancy terminal to show temps
 
 
 ## Bug Fixes
@@ -88,8 +108,6 @@ Valves not supproted yet
 - Info About Fermentation
 
 ### Yaml
-
-Todo: only use one of the libs.
 
 Using ghodss/yaml and not the pure go-yaml/yaml.
 In short, this library first converts YAML to JSON using go-yaml and then uses json.Marshal and json.Unmarshal to convert to or from the struct. This means that it effectively reuses the JSON struct tags as well as the custom JSON methods MarshalJSON and UnmarshalJSON unlike go-yaml
