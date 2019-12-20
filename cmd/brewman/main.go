@@ -19,7 +19,7 @@ import (
 	validator "gopkg.in/validator.v2"
 )
 
-type ConfigCmd struct {
+type configCmd struct {
 	configFile   string
 	outputFormat string
 	debug        *bool
@@ -70,7 +70,7 @@ func goExit(signals chan os.Signal) {
 func main() {
 
 	// config for cmd flags
-	cfg := ConfigCmd{}
+	cfg := configCmd{}
 
 	a := kingpin.New("brewman", "A command-line brew application")
 	a.Version("1.0")
@@ -168,7 +168,7 @@ func main() {
 		}
 		close(stop)
 		log.Info("cleanup in controller threat")
-		kettle.Cleanup()
+		kettle.Off()
 		log.Info("go exit")
 	}(kettle)
 
@@ -363,16 +363,16 @@ func main() {
 				log.Fatal("Failed to init Kettle:", err)
 			}
 		default:
-			log.Info("stop all actions and cleanup")
+			log.Info("stop all actions and Off")
 			if err = kettle.Init(configFile.Hotwater); err != nil {
 				log.Fatal("Failed to init Kettle:", err)
 			}
-			kettle.Cleanup()
+			kettle.Off()
 
 			if err = kettle.Init(configFile.Masher); err != nil {
 				log.Fatal("Failed to init Kettle:", err)
 			}
-			kettle.Cleanup()
+			kettle.Off()
 
 			if err = kettle.Init(configFile.Cooker); err != nil {
 				log.Fatal("Failed to init Kettle:", err)

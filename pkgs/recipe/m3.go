@@ -8,13 +8,13 @@ import (
 	"strconv"
 )
 
-type Converter struct {
+type converter struct {
 	keys map[string]string
 	cmap map[string]interface{}
 	pos  int
 }
 
-type RecipeM3Global struct {
+type m3Global struct {
 	Name   string `json:"Name" validate:"nonzero"`
 	Date   string `json:"Datum" validate:"nonzero"`
 	Sort   string `json:"Sorte" validate:"nonzero"`
@@ -32,8 +32,11 @@ type RecipeM3Global struct {
 	Annotation        string  `json:"Anmerkung_Autor,string"`
 }
 
-type RecipeM3 struct {
-	RecipeM3Global
+/*
+M3 implements Maische-Malz-und-Mehr recipies
+*/
+type M3 struct {
+	m3Global
 
 	MainCast      float64 `json:"Infusion_Hauptguss,string"`
 	InTemperatur  float64 `json:"Infusion_Einmaischtemperatur"`
@@ -41,10 +44,9 @@ type RecipeM3 struct {
 	Grouting      float64 `json:"Nachguss,string"`
 	Time          int     `json:"Kochzeit_Wuerze,string"`
 	Yeast         string  `json:"Hefe"`
-	//Temperatur    float64 `json:"Gaertemperatur,string"` // json field values has 24-25 as string, not supported
-	EndDegree   float64 `json:"Endvergaerungsgrad,string"`
-	Carbonation float64 `json:"Karbonisierung,string"`
-	Annotation  string  `json:"Anmerkung_Autor"`
+	EndDegree     float64 `json:"Endvergaerungsgrad,string"`
+	Carbonation   float64 `json:"Karbonisierung,string"`
+	Annotation    string  `json:"Anmerkung_Autor"`
 
 	Temperatur   float64
 	Malts        []Malt
@@ -53,17 +55,20 @@ type RecipeM3 struct {
 	Hops         []Hop
 	Whirlpool    []Hop
 	Ingredients  []Ingredient
-	Fermentation RecipeFermentation
+	Fermentation recipeFermentation
 }
 
-func (rm *RecipeM3) Load(s string) (*Recipe, error) {
+/*
+Load read the json file from m3
+*/
+func (rm *M3) Load(s string) (*Recipe, error) {
 	err := json.Unmarshal([]byte(s), rm)
 	if err != nil {
 		return nil, err
 	}
 	recipe := &Recipe{}
 	//recipe.original = s
-	recipe.Global = RecipeGlobal{
+	recipe.Global = recipeGlobal{
 		Name:              rm.Name,
 		Date:              rm.Date,
 		Sort:              rm.Sort,
@@ -79,19 +84,19 @@ func (rm *RecipeM3) Load(s string) (*Recipe, error) {
 		Annotation:        rm.Annotation,
 	}
 
-	recipe.Water = RecipeWater{
+	recipe.Water = recipeWater{
 		MainCast: rm.MainCast,
 		Grouting: rm.Grouting,
 	}
 
-	recipe.Mash = RecipeMash{
+	recipe.Mash = recipeMash{
 		InTemperatur:  rm.InTemperatur,
 		OutTemperatur: rm.OutTemperatur,
 		Malts:         rm.Malts,
 		Rests:         rm.Rests,
 	}
 
-	recipe.Cook = RecipeCook{
+	recipe.Cook = recipeCook{
 		Time:        rm.Time,
 		Ingredients: rm.Ingredients,
 		FontHops:    rm.FontHops,
@@ -99,7 +104,7 @@ func (rm *RecipeM3) Load(s string) (*Recipe, error) {
 		Whirlpool:   rm.Whirlpool,
 	}
 
-	recipe.Fermentation = RecipeFermentation{
+	recipe.Fermentation = recipeFermentation{
 		Yeast:       rm.Yeast,
 		Temperatur:  rm.Temperatur,
 		EndDegree:   rm.EndDegree,
@@ -110,7 +115,7 @@ func (rm *RecipeM3) Load(s string) (*Recipe, error) {
 	return recipe, nil
 }
 
-func (rm RecipeM3) String() string {
+func (rm M3) String() string {
 	b, err := json.Marshal(rm)
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -118,7 +123,10 @@ func (rm RecipeM3) String() string {
 	return string(b)
 }
 
-func (rm RecipeM3) PrettyPrint() string {
+/*
+PrettyPrint return a pretty string
+*/
+func (rm M3) PrettyPrint() string {
 	b, err := json.MarshalIndent(rm, "", "   ")
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -126,11 +134,14 @@ func (rm RecipeM3) PrettyPrint() string {
 	return string(b)
 }
 
-func (rm *RecipeM3) UnmarshalJSON(data []byte) error {
+/*
+UnmarshalJSON implements the json unmarshaller. The json is difficult to decode. convert json fields
+*/
+func (rm *M3) UnmarshalJSON(data []byte) error {
 	// this is no good implementation. I hope my skills will be better in the future to do this -.-
 	// Unmarshal good data from this creepy json.
 
-	type plain RecipeM3
+	type plain M3
 	if err := json.Unmarshal(data, ((*plain)(rm))); err != nil {
 		return err
 	}
@@ -142,7 +153,7 @@ func (rm *RecipeM3) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	conv := &Converter{}
+	conv := &converter{}
 	// add a test file for this
 	// in this field are different values. normalize...
 
@@ -206,10 +217,10 @@ func (rm *RecipeM3) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (con *Converter) RecipeUnit() (*RecipeUnit, error) {
+func (con *converter) RecipeUnit() (*recipeUnit, error) {
 
 	k := fmt.Sprintf(con.keys["Name"], con.pos)
-	recipeUnit := &RecipeUnit{}
+	recipeUnit := &recipeUnit{}
 	var ok bool
 	var err error
 
@@ -218,12 +229,12 @@ func (con *Converter) RecipeUnit() (*RecipeUnit, error) {
 	}
 
 	if recipeUnit.Name == "" {
-		return nil, errors.New(fmt.Sprintf("Key Value is empty: %s", k))
+		return nil, fmt.Errorf(fmt.Sprintf("Key Value is empty: %s", k))
 	}
 
 	k = fmt.Sprintf(con.keys["Amount"], con.pos)
-	if !KeyExists(con.cmap, k) {
-		return nil, errors.New(fmt.Sprintf("Amount missing: %s", k))
+	if !keyExists(con.cmap, k) {
+		return nil, fmt.Errorf(fmt.Sprintf("Amount missing: %s", k))
 	}
 
 	switch con.cmap[k].(type) {
@@ -240,8 +251,8 @@ func (con *Converter) RecipeUnit() (*RecipeUnit, error) {
 	}
 
 	k = fmt.Sprintf(con.keys["Unit"], con.pos)
-	if !KeyExists(con.cmap, k) {
-		return nil, errors.New(fmt.Sprintf("Unit missing: %s", k))
+	if !keyExists(con.cmap, k) {
+		return nil, fmt.Errorf(fmt.Sprintf("Unit missing: %s", k))
 	}
 
 	if con.cmap[k] == "kg" {
@@ -251,31 +262,31 @@ func (con *Converter) RecipeUnit() (*RecipeUnit, error) {
 	return recipeUnit, nil
 }
 
-func (con *Converter) RecipeTimeUnit() (*RecipeTimeUnit, error) {
-	recipeTimeUnit := &RecipeTimeUnit{}
+func (con *converter) RecipeTimeUnit() (*recipeTimeUnit, error) {
+	timeUnit := &recipeTimeUnit{}
 	u, err := con.RecipeUnit()
 	if err != nil {
 		return nil, err
 	}
-	recipeTimeUnit.Name = u.Name
-	recipeTimeUnit.Amount = u.Amount
+	timeUnit.Name = u.Name
+	timeUnit.Amount = u.Amount
 
 	k := fmt.Sprintf(con.keys["Time"], con.pos)
-	if !KeyExists(con.cmap, k) {
-		return nil, errors.New(fmt.Sprintf("Time missing: %s", k))
+	if !keyExists(con.cmap, k) {
+		return nil, fmt.Errorf(fmt.Sprintf("Time missing: %s", k))
 	}
 
-	if recipeTimeUnit.Time, err = strconv.Atoi(con.cmap[k].(string)); err != nil {
+	if timeUnit.Time, err = strconv.Atoi(con.cmap[k].(string)); err != nil {
 		return nil, err
 	}
 
-	return recipeTimeUnit, nil
+	return timeUnit, nil
 }
 
-func (con *Converter) Malts() ([]RecipeUnit, error) {
-	var Ru []RecipeUnit
+func (con *converter) Malts() ([]recipeUnit, error) {
+	var Ru []recipeUnit
 
-	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
+	for i := 1; keyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
 		con.pos = i
 		ru, err := con.RecipeUnit()
 		if err != nil {
@@ -286,10 +297,10 @@ func (con *Converter) Malts() ([]RecipeUnit, error) {
 	return Ru, nil
 }
 
-func (con *Converter) RecipeTimeUnits() ([]RecipeTimeUnit, error) {
-	var Rtu []RecipeTimeUnit
+func (con *converter) RecipeTimeUnits() ([]recipeTimeUnit, error) {
+	var Rtu []recipeTimeUnit
 
-	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
+	for i := 1; keyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
 		con.pos = i
 		rtu, err := con.RecipeTimeUnit()
 		if err != nil {
@@ -300,12 +311,12 @@ func (con *Converter) RecipeTimeUnits() ([]RecipeTimeUnit, error) {
 	return Rtu, nil
 }
 
-func (con *Converter) Ingredient() ([]RecipeTimeUnit, error) {
-	var Rtu []RecipeTimeUnit
+func (con *converter) Ingredient() ([]recipeTimeUnit, error) {
+	var Rtu []recipeTimeUnit
 
-	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
+	for i := 1; keyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
 		con.pos = i
-		rtu := &RecipeTimeUnit{}
+		rtu := &recipeTimeUnit{}
 		ru, err := con.RecipeUnit()
 		if err != nil {
 			return nil, err
@@ -319,10 +330,10 @@ func (con *Converter) Ingredient() ([]RecipeTimeUnit, error) {
 	return Rtu, nil
 }
 
-func (con *Converter) FermentationHop() ([]Hop, error) {
+func (con *converter) FermentationHop() ([]Hop, error) {
 	var Hops []Hop
 
-	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
+	for i := 1; keyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
 		con.pos = i
 		hop := &Hop{}
 		ru, err := con.RecipeUnit()
@@ -339,10 +350,10 @@ func (con *Converter) FermentationHop() ([]Hop, error) {
 	return Hops, nil
 }
 
-func (con *Converter) Rests() ([]Rest, error) {
+func (con *converter) Rests() ([]Rest, error) {
 	var Rests []Rest
 
-	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Time"], i)); i++ {
+	for i := 1; keyExists(con.cmap, fmt.Sprintf(con.keys["Time"], i)); i++ {
 		con.pos = i
 		rest := &Rest{}
 		k := fmt.Sprintf(con.keys["Time"], con.pos)
@@ -354,7 +365,7 @@ func (con *Converter) Rests() ([]Rest, error) {
 		}
 
 		if con.cmap[k].(string) == "" {
-			return nil, errors.New(fmt.Sprintf("Rest value is empty: %s", k))
+			return nil, fmt.Errorf(fmt.Sprintf("Rest value is empty: %s", k))
 		}
 
 		if rest.Time, err = strconv.Atoi(con.cmap[k].(string)); err != nil {
@@ -362,8 +373,8 @@ func (con *Converter) Rests() ([]Rest, error) {
 		}
 
 		k = fmt.Sprintf(con.keys["Temperatur"], con.pos)
-		if !KeyExists(con.cmap, k) {
-			return nil, errors.New(fmt.Sprintf("Amount missing: %s", k))
+		if !keyExists(con.cmap, k) {
+			return nil, fmt.Errorf(fmt.Sprintf("Amount missing: %s", k))
 		}
 
 		if rest.Temperatur, err = strconv.ParseFloat(con.cmap[k].(string), 64); err != nil {
@@ -375,7 +386,7 @@ func (con *Converter) Rests() ([]Rest, error) {
 	return Rests, nil
 }
 
-func (con *Converter) BasicHop() (*Hop, error) {
+func (con *converter) BasicHop() (*Hop, error) {
 	hop := &Hop{}
 
 	u, err := con.RecipeUnit()
@@ -387,8 +398,8 @@ func (con *Converter) BasicHop() (*Hop, error) {
 	hop.Amount = u.Amount
 
 	k := fmt.Sprintf(con.keys["Alpha"], con.pos)
-	if !KeyExists(con.cmap, k) {
-		return nil, errors.New(fmt.Sprintf("Alpha missing: %s", k))
+	if !keyExists(con.cmap, k) {
+		return nil, fmt.Errorf(fmt.Sprintf("Alpha missing: %s", k))
 	}
 
 	if hop.Alpha, err = strconv.ParseFloat(con.cmap[k].(string), 64); err != nil {
@@ -397,10 +408,10 @@ func (con *Converter) BasicHop() (*Hop, error) {
 	return hop, nil
 }
 
-func (con *Converter) FontHop() ([]Hop, error) {
+func (con *converter) FontHop() ([]Hop, error) {
 	var Hops []Hop
 
-	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
+	for i := 1; keyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
 		//hop := &Hop{}
 		con.pos = i
 		hop, err := con.BasicHop()
@@ -413,10 +424,10 @@ func (con *Converter) FontHop() ([]Hop, error) {
 
 }
 
-func (con *Converter) Hop() ([]Hop, error) {
+func (con *converter) Hop() ([]Hop, error) {
 	var Hops []Hop
 
-	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
+	for i := 1; keyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
 		con.pos = i
 		hop, err := con.BasicHop()
 		if err != nil {
@@ -424,8 +435,8 @@ func (con *Converter) Hop() ([]Hop, error) {
 		}
 
 		k := fmt.Sprintf(con.keys["Time"], i)
-		if !KeyExists(con.cmap, k) {
-			return nil, errors.New(fmt.Sprintf("Time missing: %s", k))
+		if !keyExists(con.cmap, k) {
+			return nil, fmt.Errorf(fmt.Sprintf("Time missing: %s", k))
 		}
 
 		if con.cmap[k].(string) == "Whirlpool" {
@@ -440,9 +451,9 @@ func (con *Converter) Hop() ([]Hop, error) {
 	return Hops, nil
 }
 
-func (con *Converter) WhirlpoolHop() ([]Hop, error) {
+func (con *converter) WhirlpoolHop() ([]Hop, error) {
 	var Hops []Hop
-	for i := 1; KeyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
+	for i := 1; keyExists(con.cmap, fmt.Sprintf(con.keys["Name"], i)); i++ {
 		con.pos = i
 		hop, err := con.BasicHop()
 		if err != nil {
@@ -450,8 +461,8 @@ func (con *Converter) WhirlpoolHop() ([]Hop, error) {
 		}
 
 		k := fmt.Sprintf(con.keys["Time"], i)
-		if !KeyExists(con.cmap, k) {
-			return nil, errors.New(fmt.Sprintf("Time missing: %s", k))
+		if !keyExists(con.cmap, k) {
+			return nil, fmt.Errorf(fmt.Sprintf("Time missing: %s", k))
 		}
 
 		if con.cmap[k].(string) == "Whirlpool" {

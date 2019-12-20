@@ -1,5 +1,12 @@
 package brew
 
+/*
+supported sensors
+	dummy (dev mode)
+	GPIO SSR (control over gpio pins)
+	GPIO Temp (ds18b20)
+*/
+
 import (
 	"fmt"
 	"io/ioutil"
@@ -8,49 +15,55 @@ import (
 )
 
 /*
-https://periph.io/device/
-"periph.io/x/periph/host/rpi" for raspi based on http://pinout.xyz/
-func Present() bool if on raspi board
-
+TempSensor interface to Get() data from sensor
 */
 type TempSensor interface {
 	Get() (float64, error)
 }
 
+/*
+DS18B20 temperatur sensor with 1-wire protocol
+*/
 type DS18B20 struct {
 	Name string
 	Path string
 }
 
+/*
+TempDummy struct is a dummy sensor that gives you values for dev and testing
+*/
 type TempDummy struct {
 	Name string
 	Temp float64
 	fn   func() bool
 }
 
-func Down(x float64) float64 {
+func down(x float64) float64 {
 	return x - 3
 }
 
-func Up(x float64) float64 {
+func up(x float64) float64 {
 	return x + 3
 }
 
-func UpDown(x float64) float64 {
+func upDown(x float64) float64 {
 	if math.Mod(x, 2.0) > 0 {
 		return x + 3.0
 	}
 	return x - 3.0
 }
 
+/*
+Get data from Dummy
+*/
 func (td *TempDummy) Get() (float64, error) {
 
 	if td.fn() {
-		td.Temp = Up(td.Temp)
+		td.Temp = up(td.Temp)
 	}
 
 	if !td.fn() {
-		td.Temp = Down(td.Temp)
+		td.Temp = down(td.Temp)
 	}
 
 	if td.Temp < 0 {
@@ -60,6 +73,9 @@ func (td *TempDummy) Get() (float64, error) {
 	return td.Temp, nil
 }
 
+/*
+Get data from DS18B20
+*/
 func (ds DS18B20) Get() (float64, error) {
 
 	data, err := ioutil.ReadFile(ds.Path)
@@ -79,12 +95,3 @@ func (ds DS18B20) Get() (float64, error) {
 	}
 	return temp, nil
 }
-
-// func (registerSensor(Sensor, func))
-// func (getHardwareSensors)
-
-// struct OneWire interface
-
-// struct WaterFlow type
-// struct Thermometer type
-// struct WaterLevel type

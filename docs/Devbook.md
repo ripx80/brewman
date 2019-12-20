@@ -94,6 +94,42 @@ struct Heater type
 // Watchmen
 func CheckWaterFlow()
 func TempWatcher(Thermometer, Control Element, Output)
+
+// func (registerSensor(Sensor, func))
+// func (getHardwareSensors)
+
+// struct OneWire interface
+
+// struct WaterFlow type
+// struct Thermometer type
+// struct WaterLevel type
+
+/*
+https://periph.io/device/
+"periph.io/x/periph/host/rpi" for raspi based on http://pinout.xyz/
+func Present() bool if on raspi board
+
+
+// Impmement this interface allows you to parse the config file!
+
+// func (c Config) UnmarshalYAML(unmarshal func(interface{}) error) error{
+// *c = DefaultConfig
+// type plain Config
+// if err:=unmarshal((*plain)(c)); err != nil{
+// return err
+// }
+
+// }
+
+
+// type Periph struct {
+// 	State       *periph.State
+// 	TempSensors map[string]TempSensor
+// 	Controls    map[string]Control
+// }
+
+
+*/
 ```
 
 ## Ideas

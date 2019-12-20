@@ -67,8 +67,8 @@ func getLastID(baseURL string) (int, error) {
 	return lid, nil
 }
 
-func getUserComments(recipeID int) (*[]recipe.RecipeComment, error) {
-	var comments []recipe.RecipeComment
+func getUserComments(recipeID int) (*[]recipe.Comment, error) {
+	var comments []recipe.Comment
 
 	resp, err := http.Get(fmt.Sprintf("https://www.maischemalzundmehr.de/index.php?id=%d&inhaltmitte=rezept", recipeID))
 	if err != nil {
@@ -86,7 +86,7 @@ func getUserComments(recipeID int) (*[]recipe.RecipeComment, error) {
 		name := strip.StripTags(child.Eq(1).Text())
 		datetime := strings.Split(rmChar(strip.StripTags(child.Eq(2).Text()), " \n"), "-")
 		comment := strings.TrimSpace(strings.ReplaceAll(strip.StripTags(s.Find("p").Next().Text()), "\n", " "))
-		comments = append(comments, recipe.RecipeComment{
+		comments = append(comments, recipe.Comment{
 			Name:    name[5:],
 			Date:    datetime[0],
 			Comment: comment,
@@ -160,7 +160,7 @@ func main() {
 		}
 
 		cnt++
-		recipe, err := (&recipe.RecipeM3{}).Load(string(body))
+		recipe, err := (&recipe.M3{}).Load(string(body))
 		if err != nil {
 			errcnt++
 			broken := path.Join(*outdir, "broken")
@@ -180,7 +180,7 @@ func main() {
 		if err != nil {
 			log.Fatal("usercomments: ", err)
 		}
-		recipe.Comment = *c
+		recipe.Comments = *c
 
 		recipe.SavePretty(path.Join(*outdir, fmt.Sprintf("%d_%s.json", lid, fn)))
 		log.Println(recipe.Global.Name)

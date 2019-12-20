@@ -28,7 +28,7 @@ func main() {
 		a.Usage(os.Args[1:])
 	}
 
-	recipe, err := recipe.LoadFile(*in, &recipe.RecipeM3{})
+	recipe, err := recipe.LoadFile(*in, &recipe.M3{})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(2)

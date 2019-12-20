@@ -7,27 +7,31 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-// add a general type for all. add validator func for supported devices
-type TemperaturConfig struct {
-	Device  string `yaml:"device" validate:"nonzero"`  // only ds18b20 supp.
+/*
+PeriphConfig struct stores the device type and the Address in a string.
+*/
+type periphConfig struct {
+	Device  string `yaml:"device" validate:"nonzero"`
 	Address string `yaml:"address" validate:"nonzero"` // path to sys file. its bad i know
 }
 
-type ControlConfig struct {
-	Device  string `yaml:"device" validate:"nonzero"`
-	Address string `yaml:"address" validate:"min=0,max=40,nonzero"`
-}
-
-type AgiatorConfig struct {
+type periphConfigZero struct {
 	Device  string `yaml:"device"`
-	Address string `yaml:"address" validate:"min=0,max=40`
+	Address string `yaml:"address"`
 }
 
+/*
+PodConfig holds Pod Informations
+*/
 type PodConfig struct {
-	Control    ControlConfig
-	Agiator    AgiatorConfig
-	Temperatur TemperaturConfig
+	Control    periphConfig
+	Agiator    periphConfigZero
+	Temperatur periphConfig
 }
+
+/*
+Config holds all stages of config data
+*/
 type Config struct {
 	Global   GlobalConfig `yaml:"global"`
 	Hotwater PodConfig    `yaml:"hotwater"`
@@ -38,26 +42,33 @@ type Config struct {
 	original string
 }
 
+/*
+GlobalConfig general and global configs
+*/
 type GlobalConfig struct {
 	TemperaturUnit     string  `yaml:"temperatur-unit" validate:"regexp=[Cc]elsius|[Kk]elvin"`
 	HotwaterTemperatur float64 `yaml:"hotwater-temperatur" validate:"min=70,max=90"`
 	CookingTemperatur  float64 `yaml:"cooking-temperatur" validate:"min=90,max=110"`
 }
 
+/*
+RecipeConfig configurations for recipes
+*/
 type RecipeConfig struct {
 	File string `yaml:"file"`
 }
 
 var (
+	/*DefaultConfig holds a basic default configuration*/
 	DefaultConfig = Config{
-		Global: DefaultGlobalConfig,
+		Global: defaultGlobalConfig,
 		//Hotwater: DefaultPodConfig,
 		//Masher:   DefaultPodConfig,
 		//Cooker:   DefaultPodConfig,
-		Recipe: DefaultRecipeConfig,
+		Recipe: defaultRecipeConfig,
 	}
 
-	DefaultGlobalConfig = GlobalConfig{
+	defaultGlobalConfig = GlobalConfig{
 		TemperaturUnit:     "Celsius",
 		HotwaterTemperatur: 76.0,
 		CookingTemperatur:  97.5,
@@ -66,11 +77,14 @@ var (
 	// DefaultPodConfig = PodConfig{
 	// 	Control: 10,
 	// }
-	DefaultRecipeConfig = RecipeConfig{
+	defaultRecipeConfig = RecipeConfig{
 		File: "recipe.yaml",
 	}
 )
 
+/*
+Load wrapper func to load a config in yaml format
+*/
 func Load(s string) (*Config, error) {
 	cfg := &Config{}
 	//init default config
@@ -84,6 +98,9 @@ func Load(s string) (*Config, error) {
 	return cfg, nil
 }
 
+/*
+LoadFile reads the config file and parse the yaml
+*/
 func LoadFile(filename string) (*Config, error) {
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -104,6 +121,9 @@ func (c Config) String() string {
 	return string(b)
 }
 
+/*
+Save config file to disk
+*/
 func (c Config) Save(fn string) error {
 	return ioutil.WriteFile(fn, []byte(c.String()), 0644)
 }
@@ -116,14 +136,6 @@ func (pc PodConfig) String() string {
 	return string(b)
 }
 
-// func (cc ControlConfig) String() string {
-// 	b, err := yaml.Marshal(cc)
-// 	if err != nil {
-// 		return fmt.Sprintf("<error creating control config string: %s>", err)
-// 	}
-// 	return string(b)
-// }
-
 func (rc RecipeConfig) String() string {
 	b, err := yaml.Marshal(rc)
 	if err != nil {
@@ -131,14 +143,3 @@ func (rc RecipeConfig) String() string {
 	}
 	return string(b)
 }
-
-// Impmement this interface allows you to parse the config file!
-
-// func (c Config) UnmarshalYAML(unmarshal func(interface{}) error) error{
-// 	*c = DefaultConfig
-// 	type plain Config
-// 	if err:=unmarshal((*plain)(c)); err != nil{
-// 		return err
-// 	}
-
-// }

@@ -8,17 +8,20 @@ import (
 	"github.com/ghodss/yaml"
 )
 
+/*
+Recipe as a good json structure for beer recipies
+*/
 type Recipe struct {
-	Global       RecipeGlobal       `json:"Global"`
-	Water        RecipeWater        `json:"Water"`
-	Mash         RecipeMash         `json:"Mash"`
-	Cook         RecipeCook         `json:"Cook"`
-	Fermentation RecipeFermentation `json:"Fermentation"`
-	Comment      []RecipeComment    `json:"Comments"`
+	Global       recipeGlobal       `json:"Global"`
+	Water        recipeWater        `json:"Water"`
+	Mash         recipeMash         `json:"Mash"`
+	Cook         recipeCook         `json:"Cook"`
+	Fermentation recipeFermentation `json:"Fermentation"`
+	Comments     []Comment          `json:"Comments"`
 	original     string
 }
 
-type RecipeGlobal struct {
+type recipeGlobal struct {
 	Name              string  `json:"Name" validate:"nonzero"`
 	Date              string  `json:"Date" validate:"nonzero"`
 	Sort              string  `json:"Sort" validate:"nonzero"`
@@ -34,19 +37,19 @@ type RecipeGlobal struct {
 	Annotation        string // Anmerkungen des Authors
 }
 
-type RecipeWater struct {
+type recipeWater struct {
 	MainCast float64 // Hauptguss
 	Grouting float64 // Nachguss in L
 }
 
-type RecipeMash struct {
+type recipeMash struct {
 	InTemperatur  float64 // Einmaischtemperatur
 	OutTemperatur float64 // Abmaischtemperatur
 	Malts         []Malt  `json:"Malts"`
 	Rests         []Rest  `json:"Rests"`
 }
 
-type RecipeCook struct {
+type recipeCook struct {
 	Time        int          // in Minutes, Kochzeit
 	Ingredients []Ingredient // Weitere Zutaten
 	FontHops    []Hop        // Vorderhopfen
@@ -54,7 +57,7 @@ type RecipeCook struct {
 	Whirlpool   []Hop
 }
 
-type RecipeFermentation struct {
+type recipeFermentation struct {
 	Yeast       string // Hefe
 	Temperatur  float64
 	EndDegree   float64      // Endvergärungsgrad
@@ -63,35 +66,54 @@ type RecipeFermentation struct {
 	Ingredients []Ingredient // Weitere Zutaten
 }
 
-type RecipeComment struct {
+/*
+Comment struct to add comments to recepies
+*/
+type Comment struct {
 	Name    string
 	Date    string
 	Comment string
 }
 
-type RecipeUnit struct {
+type recipeUnit struct {
 	Name   string
 	Amount float64
 }
 
-type RecipeTimeUnit struct {
-	RecipeUnit
+type recipeTimeUnit struct {
+	recipeUnit
 	Time int
 }
 
-type Malt = RecipeUnit
-type Ingredient = RecipeTimeUnit
+/*
+Malt is a recipe Unit
+*/
+type Malt = recipeUnit
 
+/*
+Ingredient is a recipe TimeUnit
+*/
+type Ingredient = recipeTimeUnit
+
+/*
+Rest holds resting time and temp
+*/
 type Rest struct {
 	Time       int
 	Temperatur float64
 }
 
+/*
+Hop holds unit and Alpha
+*/
 type Hop struct {
-	RecipeTimeUnit
+	recipeTimeUnit
 	Alpha float64
 }
 
+/*
+Load unmarshal a recipe
+*/
 func (r *Recipe) Load(s string) (*Recipe, error) {
 	err := yaml.Unmarshal([]byte(s), r)
 	if err != nil {
@@ -108,6 +130,9 @@ func (r Recipe) String() string {
 	return string(b)
 }
 
+/*
+PrettyPrint return a pretty string
+*/
 func (r Recipe) PrettyPrint() string {
 	b, err := json.MarshalIndent(r, "", "   ")
 	if err != nil {
@@ -116,15 +141,23 @@ func (r Recipe) PrettyPrint() string {
 	return string(b)
 }
 
+/*
+Save a recipe to disk
+*/
 func (r Recipe) Save(fn string) error {
 	return ioutil.WriteFile(fn, []byte(r.String()), 0644)
 }
 
+/*
+SavePretty save a pretty string to disk
+*/
 func (r Recipe) SavePretty(fn string) error {
 	return ioutil.WriteFile(fn, []byte(r.PrettyPrint()), 0644)
 }
 
-//not working
+/*
+SavePrettyYaml saves a pretty yamle to disk. not working?
+*/
 func (r Recipe) SavePrettyYaml(fn string) error {
 	s, err := yaml.Marshal(r)
 	if err != nil {
@@ -133,7 +166,7 @@ func (r Recipe) SavePrettyYaml(fn string) error {
 	return ioutil.WriteFile(fn, []byte(s), 0644)
 }
 
-func (r RecipeGlobal) String() string {
+func (r recipeGlobal) String() string {
 	b, err := yaml.Marshal(r)
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -141,7 +174,7 @@ func (r RecipeGlobal) String() string {
 	return string(b)
 }
 
-func (r RecipeGlobal) PrettyPrint() string {
+func (r recipeGlobal) PrettyPrint() string {
 	b, err := json.MarshalIndent(r, "", "   ")
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -149,7 +182,7 @@ func (r RecipeGlobal) PrettyPrint() string {
 	return string(b)
 }
 
-func (r RecipeMash) String() string {
+func (r recipeMash) String() string {
 	b, err := yaml.Marshal(r)
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -157,7 +190,7 @@ func (r RecipeMash) String() string {
 	return string(b)
 }
 
-func (r RecipeMash) PrettyPrint() string {
+func (r recipeMash) PrettyPrint() string {
 	b, err := json.MarshalIndent(r, "", "   ")
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -165,7 +198,7 @@ func (r RecipeMash) PrettyPrint() string {
 	return string(b)
 }
 
-func (r RecipeWater) String() string {
+func (r recipeWater) String() string {
 	b, err := yaml.Marshal(r)
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -173,7 +206,7 @@ func (r RecipeWater) String() string {
 	return string(b)
 }
 
-func (r RecipeWater) PrettyPrint() string {
+func (r recipeWater) PrettyPrint() string {
 	b, err := json.MarshalIndent(r, "", "   ")
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -181,7 +214,7 @@ func (r RecipeWater) PrettyPrint() string {
 	return string(b)
 }
 
-func (r RecipeCook) String() string {
+func (r recipeCook) String() string {
 	b, err := yaml.Marshal(r)
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
@@ -189,7 +222,7 @@ func (r RecipeCook) String() string {
 	return string(b)
 }
 
-func (r RecipeCook) PrettyPrint() string {
+func (r recipeCook) PrettyPrint() string {
 	b, err := json.MarshalIndent(r, "", "   ")
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)

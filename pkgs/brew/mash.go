@@ -13,6 +13,9 @@ import (
 	"periph.io/x/periph/host"
 )
 
+/*
+Kettle is the pod unit with Temp, Heater and Agitator
+*/
 type Kettle struct {
 	Temp     TempSensor
 	Heater   Control
@@ -20,10 +23,7 @@ type Kettle struct {
 }
 
 /*
-supported sensors
-	dummy (dev mode)
-	GPIO SSR (control over gpio pins)
-	GPIO Temp (ds18b20)
+Init setup a kettle with information from a config file
 */
 func (k *Kettle) Init(kettleConfig config.PodConfig) error {
 
@@ -80,6 +80,9 @@ func (k *Kettle) Init(kettleConfig config.PodConfig) error {
 	return nil
 }
 
+/*
+On turns the Agitator and the Heater on if available
+*/
 func (k *Kettle) On() {
 	if k.Agitator != nil && !k.Agitator.State() {
 		k.Agitator.On()
@@ -90,7 +93,10 @@ func (k *Kettle) On() {
 	}
 }
 
-func (k *Kettle) Cleanup() {
+/*
+Off turns the Agitator and the Heater of if available
+*/
+func (k *Kettle) Off() {
 	if k.Agitator != nil && !k.Agitator.State() {
 		k.Agitator.Off()
 	}
@@ -100,6 +106,9 @@ func (k *Kettle) Cleanup() {
 	}
 }
 
+/*
+TempIncreaseTo control the Heater to increase to a given temperature
+*/
 func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
 	var (
 		temp float64
@@ -113,7 +122,7 @@ func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
 			}
 			return nil
 		case <-time.After(1 * time.Second):
-			if temp, err = k.TempWatch(tempTo); err != nil {
+			if temp, err = k.tempWatch(tempTo); err != nil {
 				return err
 			}
 			if temp >= tempTo {
@@ -126,9 +135,11 @@ func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
 			log.Infof("Increase: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
 		}
 	}
-	return fmt.Errorf("terminated")
 }
 
+/*
+TempHolder control the Heater to hold a given temperature. You can set a duration or 0 (unlimited)
+*/
 func (k *Kettle) TempHolder(stop chan struct{}, tempTo float64, holdTime time.Duration) error {
 	var (
 		temp float64
@@ -150,16 +161,15 @@ func (k *Kettle) TempHolder(stop chan struct{}, tempTo float64, holdTime time.Du
 			return nil
 
 		case <-time.After(1 * time.Second):
-			if temp, err = k.TempWatch(tempTo); err != nil {
+			if temp, err = k.tempWatch(tempTo); err != nil {
 				return err
 			}
 			log.Infof("Hold: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
 		}
 	}
-	return fmt.Errorf("terminated")
 }
 
-func (k *Kettle) TempWatch(temp float64) (current float64, err error) {
+func (k *Kettle) tempWatch(temp float64) (current float64, err error) {
 	if current, err = k.Temp.Get(); err != nil {
 		return 0, err
 	}
