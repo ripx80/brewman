@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	yaml "gopkg.in/yaml.v2"
-	//"github.com/ghodss/yaml"
+	"github.com/ghodss/yaml"
 )
 
 // add a general type for all. add validator func for supported devices
@@ -77,7 +76,7 @@ func Load(s string) (*Config, error) {
 	//init default config
 	*cfg = DefaultConfig
 
-	err := yaml.UnmarshalStrict([]byte(s), cfg)
+	err := yaml.Unmarshal([]byte(s), cfg)
 	if err != nil {
 		return nil, err
 	}

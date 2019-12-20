@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	// remove config dep
 	"github.com/ripx80/brewman/config"
 	log "github.com/sirupsen/logrus"
 	"periph.io/x/periph/conn/gpio"
