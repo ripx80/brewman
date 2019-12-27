@@ -1,8 +1,9 @@
 package brew
 
 import (
-	log "github.com/sirupsen/logrus"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 /*
@@ -46,13 +47,49 @@ func (k *Kettle) Off() {
 }
 
 /*
+Watch is a blocking func which checks the temp and sate of the kettle
+*/
+func (k *Kettle) Watch(stop chan struct{}, tolerance int) error {
+	var (
+		temp float64
+		last float64
+		err  error
+	)
+	failcnt := 0
+
+	for {
+		select {
+		case <-stop:
+			log.Debug("Watcher go exit")
+			return nil
+		case <-time.After(1 * time.Second):
+			if temp, err = k.Temp.Get(); err != nil {
+				return err
+			}
+			if (k.Heater.State() && temp < (last)) || (!k.Heater.State() && temp > (last)) {
+				failcnt++
+			}
+
+			if failcnt >= tolerance {
+				log.Warnf("Heater is on/off but temp increase/decrease, temp: %.2f last: %.2f", temp, last)
+				failcnt = 0
+			}
+			last = temp
+		}
+	}
+
+}
+
+/*
 TempIncreaseTo control the Heater to increase to a given temperature
 */
 func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
+
 	var (
 		temp float64
 		err  error
 	)
+
 	for {
 		select {
 		case <-stop:
@@ -64,6 +101,7 @@ func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
 			if temp, err = k.tempWatch(tempTo); err != nil {
 				return err
 			}
+
 			if temp >= tempTo {
 				if k.Heater.State() {
 					k.Heater.Off()
@@ -79,14 +117,14 @@ func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
 /*
 TempHolder control the Heater to hold a given temperature. You can set a duration or 0 (unlimited)
 */
-func (k *Kettle) TempHolder(stop chan struct{}, tempTo float64, holdTime time.Duration) error {
+func (k *Kettle) TempHolder(stop chan struct{}, tempTo float64, timeout time.Duration) error {
 	var (
 		temp float64
 		err  error
 	)
-	timeout := make(<-chan time.Time, 1) // placeholder for timer, 0 run forever
-	if holdTime > 0 {
-		timeout = time.After(holdTime)
+	ttl := make(<-chan time.Time, 1) // placeholder for timer, 0 run forever
+	if timeout > 0 {
+		ttl = time.After(timeout)
 	}
 	for {
 		select {
@@ -96,7 +134,7 @@ func (k *Kettle) TempHolder(stop chan struct{}, tempTo float64, holdTime time.Du
 			}
 			return nil
 
-		case <-timeout:
+		case <-ttl:
 			return nil
 
 		case <-time.After(1 * time.Second):

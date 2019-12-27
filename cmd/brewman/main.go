@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -151,6 +152,8 @@ func main() {
 
 	sc = a.Command("mash", "mash brew steps")
 	sc.Command("start", "start the mash precedure")
+	sr = sc.Command("rast", "jump to specific rast")
+	rastNum := sr.Arg("num", "rast number [1-8]").Required().Int()
 
 	sc = a.Command("hotwater", "make hotwater in kettle")
 	sc.Command("start", "start the hotwater precedure")
@@ -211,9 +214,10 @@ func main() {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	stop := make(chan struct{})
 	kettle := &brew.Kettle{} //need for cleanup
+	wg := new(sync.WaitGroup)
 
 	// signal handler
-	go func(kettle *brew.Kettle) {
+	go func() {
 		defer os.Exit(0) //add error channel
 		select {
 		case <-signals:
@@ -222,8 +226,20 @@ func main() {
 		close(stop)
 		log.Info("cleanup in controller threat")
 		kettle.Off()
+		wg.Wait() // wait for all workers
 		log.Info("go exit")
-	}(kettle)
+	}()
+
+	// watch threat
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := kettle.Watch(stop, 2); err != nil {
+			log.Error(err)
+			goExit(signals)
+		}
+	}()
 
 	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
 
@@ -327,6 +343,48 @@ func main() {
 		}
 
 		log.Info("Mashing finished successful")
+		goExit(signals)
+
+	case "mash rast":
+
+		num := *(rastNum)
+
+		if err = Init(kettle, configFile.Masher); err != nil {
+			log.Fatal("Failed to init Kettle:", err)
+		}
+
+		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+
+		if num > 8 || num <= 0 {
+			log.Error("rast number out of range [1-8]")
+			os.Exit(1)
+		}
+
+		if len(recipe.Mash.Rests) < num {
+			log.Error("rast number not in recipe")
+			os.Exit(1)
+		}
+
+		log.Infof("jump to rast number: %d", num)
+		log.Info("using recipe: ", recipe.Global.Name)
+
+		rast := recipe.Mash.Rests[num-1]
+		log.Infof("Rast %d: Time: %d Temperatur: %.2f\n", num, rast.Time, rast.Temperatur)
+		if err := kettle.TempIncreaseTo(stop, rast.Temperatur); err != nil {
+			log.Error(err)
+			goExit(signals)
+		}
+
+		if err := kettle.TempHolder(stop, rast.Temperatur, time.Duration(rast.Time*60)*time.Second); err != nil {
+			log.Error(err)
+			goExit(signals)
+		}
+
+		log.Info("Rast finished successful")
 		goExit(signals)
 
 	case "cook start":

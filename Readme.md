@@ -42,24 +42,31 @@ describe comming soon
 
 0.2
 
-- [ ] correct os.Exit codes
+- [x] jump to rast
 - [x] lib improvements reduce dependencies
-- [ ] jump to rast
-- [ ] weird control. if something happen crazy (heater on -> temp down) log warnings
+- [x] remove in mash config dep
+- [x] document exported funcs, check private
+- [x] weird control. if something happen crazy (heater on -> temp down) log warnings
 - [ ] recipies: calculate other water/size informations
+- [ ] correct os.Exit codes
 - [ ] add more debug informations
 - [ ] add all test files, use testify and testify/mocking
 - [ ] add data channel to lib
 - [ ] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
-- [x] remove in mash config dep
-- [x] document exported funcs, check private
+- [ ] improve cmd parsing
 
 0.3
 
 - [ ] Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
 - [ ] Metric Exporter: Prometheus, NodeExporter and internal
 - [ ] use interactive mode - use a fancy terminal to show temps
+
+0.4
+
+- [ ] Webinterface with Vue.js
+- [ ] grab Status from api
+- [ ] grab Metrics from Prometheus
 
 ## Units
 
