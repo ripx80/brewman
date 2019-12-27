@@ -1,7 +1,11 @@
 package brew
 
 import (
+	"fmt"
+
 	"periph.io/x/periph/conn/gpio"
+	"periph.io/x/periph/conn/gpio/gpioreg"
+	"periph.io/x/periph/host"
 )
 
 /*
@@ -46,7 +50,7 @@ func (d *SSRDummy) Off() error {
 /*
 State get the current state of dummy
 */
-func (d SSRDummy) State() bool { return d.state }
+func (d *SSRDummy) State() bool { return d.state }
 
 /*
 On turn ssr on
@@ -71,4 +75,22 @@ State returns the current state of ssr
 */
 func (ssr *SSR) State() bool {
 	return bool(ssr.Pin.Read())
+}
+
+/*
+SSRReg register a valid gpio address and return a SSR struct
+*/
+func SSRReg(address string) (*SSR, error) {
+	var p gpio.PinIO
+	// if you use more than one periph driver do this only once in a higher level
+	_, err := host.Init()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize periph: %v", err)
+	}
+
+	p = gpioreg.ByName(address)
+	if p == nil {
+		return nil, fmt.Errorf("failed to find heater pin: %s", address)
+	}
+	return &SSR{Pin: p}, nil
 }

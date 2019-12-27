@@ -42,14 +42,18 @@ describe comming soon
 
 0.2
 
+- [ ] correct os.Exit codes
+- [x] lib improvements reduce dependencies
+- [ ] jump to rast
+- [ ] weird control. if something happen crazy (heater on -> temp down) log warnings
 - [ ] recipies: calculate other water/size informations
 - [ ] add more debug informations
 - [ ] add all test files, use testify and testify/mocking
 - [ ] add data channel to lib
 - [ ] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
-- [ ] remove in mash config dep
-- [ ] document exported funcs, check private
+- [x] remove in mash config dep
+- [x] document exported funcs, check private
 
 0.3
 
