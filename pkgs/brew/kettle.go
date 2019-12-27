@@ -151,7 +151,7 @@ func (k *Kettle) tempWatch(temp float64) (current float64, err error) {
 		return 0, err
 	}
 	if current < temp && !k.Heater.State() {
-		log.Debug("Heater Off")
+		log.Debug("Heater On")
 		k.Heater.On()
 	}
 	if current > temp && k.Heater.State() {
