@@ -6,7 +6,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -233,7 +232,7 @@ func main() {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	stop := make(chan struct{})
 	kettle := &brew.Kettle{} //need for cleanup
-	wg := new(sync.WaitGroup)
+	//wg := new(sync.WaitGroup)
 
 	// signal handler // only for threat jobs
 	go func() {
@@ -245,20 +244,20 @@ func main() {
 		close(stop)
 		log.Info("cleanup in controller threat")
 		kettle.Off()
-		wg.Wait() // wait for all workers
+		//wg.Wait() // wait for all workers
 		log.Info("go exit")
 	}()
 
 	// watch threat, must have temp initilized... must call after a successful init of a Kettle
 	// think about a good implementation
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := kettle.Watch(stop, 2); err != nil {
-			log.Error(err)
-			goExit(signals)
-		}
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	if err := kettle.Watch(stop, 2); err != nil {
+	// 		log.Error(err)
+	// 		goExit(signals)
+	// 	}
+	// }()
 
 	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
 
