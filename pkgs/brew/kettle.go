@@ -47,22 +47,21 @@ func (k *Kettle) Off() {
 }
 
 /*
-Watch is a blocking func which checks the temp and sate of the kettle
+TempCompare is a blocking func which checks the temp and sate of the kettle
 */
-func (k *Kettle) compareTemp(last float64, temp float64) bool {
+func (k *Kettle) TempCompare(last float64, temp float64) bool {
 	return (k.Heater.State() && temp < (last)) || (!k.Heater.State() && temp > (last))
 }
 
 /*
-HandleTemp is i upper logic function to increase or hold the temp of the kettle
-its a blocking function. you can use the stop channel to stop the func.
 mabye do it not in the lib or in a other place to keep the lib simple
 */
 
 /*
-TempIncreaseTo control the Heater to increase to a given temperature
+TempUp control the Heater to increase to a given temperature
+Its a blocking function which you can stop with the stop channel
 */
-func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
+func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 
 	var (
 		last    float64
@@ -79,10 +78,10 @@ func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
 			}
 			return nil
 		case <-time.After(1 * time.Second):
-			if temp, err = k.setTemp(tempTo); err != nil {
+			if temp, err = k.TempSet(tempTo); err != nil {
 				return err
 			}
-			if !k.compareTemp(last, temp) {
+			if !k.TempCompare(last, temp) {
 				failcnt++
 			}
 
@@ -104,12 +103,15 @@ func (k *Kettle) TempIncreaseTo(stop chan struct{}, tempTo float64) error {
 }
 
 /*
-TempHolder control the Heater to hold a given temperature. You can set a duration or 0 (unlimited)
+TempHold control the Heater to hold a given temperature. You can set a duration or 0 (unlimited)
+Its a blocking function which you can stop with the stop channel
 */
-func (k *Kettle) TempHolder(stop chan struct{}, tempTo float64, timeout time.Duration) error {
+func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Duration) error {
 	var (
-		temp float64
-		err  error
+		last    float64
+		temp    float64
+		failcnt uint8
+		err     error
 	)
 	ttl := make(<-chan time.Time, 1) // placeholder for timer, 0 run forever
 	if timeout > 0 {
@@ -127,15 +129,27 @@ func (k *Kettle) TempHolder(stop chan struct{}, tempTo float64, timeout time.Dur
 			return nil
 
 		case <-time.After(1 * time.Second):
-			if temp, err = k.setTemp(tempTo); err != nil {
+			if temp, err = k.TempSet(tempTo); err != nil {
 				return err
 			}
+			if !k.TempCompare(last, temp) {
+				failcnt++
+			}
+
+			if failcnt >= 3 {
+				log.Warn("Temperature not increased but the heater is on. Check your hardware setup")
+				failcnt = 0
+			}
+
 			log.Infof("Hold: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
 		}
 	}
 }
 
-func (k *Kettle) setTemp(temp float64) (current float64, err error) {
+/*
+TempSet check the state of the Heater and turn off/on related to the given temp
+*/
+func (k *Kettle) TempSet(temp float64) (current float64, err error) {
 	if current, err = k.Temp.Get(); err != nil {
 		return 0, err
 	}

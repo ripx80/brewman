@@ -131,7 +131,7 @@ func validate(stop chan struct{}, kettle *brew.Kettle, config config.PodConfig) 
 		log.Error("validate: get no temp from sensor")
 		return err
 	}
-	if err = kettle.TempIncreaseTo(stop, tempTo+1); err != nil {
+	if err = kettle.TempUp(stop, tempTo+1); err != nil {
 		log.Error("validate: increase temp failed")
 		return err
 	}
@@ -393,12 +393,12 @@ func main() {
 			kettle.Agitator.On()
 		}
 
-		if err := kettle.TempIncreaseTo(stop, configFile.Global.HotwaterTemperatur); err != nil {
+		if err := kettle.TempUp(stop, configFile.Global.HotwaterTemperatur); err != nil {
 			log.Error(err)
 			goExit(signals)
 		}
 
-		if err := kettle.TempHolder(stop, configFile.Global.HotwaterTemperatur, 0); err != nil {
+		if err := kettle.TempHold(stop, configFile.Global.HotwaterTemperatur, 0); err != nil {
 			log.Error(err)
 			goExit(signals)
 		}
@@ -427,7 +427,7 @@ func main() {
 			kettle.Agitator.On()
 		}
 
-		if err := kettle.TempIncreaseTo(stop, recipe.Mash.InTemperatur); err != nil {
+		if err := kettle.TempUp(stop, recipe.Mash.InTemperatur); err != nil {
 			log.Error(err)
 			goExit(signals)
 		}
@@ -439,12 +439,12 @@ func main() {
 		for num, rast := range recipe.Mash.Rests {
 			log.Infof("Rast %d: Time: %d Temperatur:%f\n", num, rast.Time, rast.Temperatur)
 
-			if err := kettle.TempIncreaseTo(stop, rast.Temperatur); err != nil {
+			if err := kettle.TempUp(stop, rast.Temperatur); err != nil {
 				log.Error(err)
 				goExit(signals)
 			}
 
-			if err := kettle.TempHolder(stop, rast.Temperatur, time.Duration(rast.Time*60)*time.Second); err != nil {
+			if err := kettle.TempHold(stop, rast.Temperatur, time.Duration(rast.Time*60)*time.Second); err != nil {
 				log.Error(err)
 				goExit(signals)
 			}
@@ -483,12 +483,12 @@ func main() {
 
 		rast := recipe.Mash.Rests[num-1]
 		log.Infof("Rast %d: Time: %d Temperatur: %.2f\n", num, rast.Time, rast.Temperatur)
-		if err := kettle.TempIncreaseTo(stop, rast.Temperatur); err != nil {
+		if err := kettle.TempUp(stop, rast.Temperatur); err != nil {
 			log.Error(err)
 			goExit(signals)
 		}
 
-		if err := kettle.TempHolder(stop, rast.Temperatur, time.Duration(rast.Time*60)*time.Second); err != nil {
+		if err := kettle.TempHold(stop, rast.Temperatur, time.Duration(rast.Time*60)*time.Second); err != nil {
 			log.Error(err)
 			goExit(signals)
 		}
@@ -517,12 +517,12 @@ func main() {
 			kettle.Agitator.On()
 		}
 
-		if err := kettle.TempIncreaseTo(stop, configFile.Global.CookingTemperatur); err != nil {
+		if err := kettle.TempUp(stop, configFile.Global.CookingTemperatur); err != nil {
 			log.Error(err)
 			goExit(signals)
 		}
 
-		if err := kettle.TempHolder(stop, configFile.Global.CookingTemperatur, time.Duration(recipe.Cook.Time*60)*time.Second); err != nil {
+		if err := kettle.TempHold(stop, configFile.Global.CookingTemperatur, time.Duration(recipe.Cook.Time*60)*time.Second); err != nil {
 			log.Error(err)
 			goExit(signals)
 		}

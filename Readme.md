@@ -54,7 +54,8 @@ describe comming soon
 - [ ] add data channel to lib
 - [ ] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
-- [ ] improve cmd parsing
+- [ ] improve cmd parsing, change to cobra (check structure)
+- [ ] add 433mh control unit with make file (external program)
 
 0.3
 
