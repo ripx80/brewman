@@ -3,13 +3,8 @@ package brew
 import (
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	log "github.com/ripx80/brave/log/logger"
 )
-
-/*
-Todo:
- - Remove logs in funcs. Do this with data chan or grab data outside
-*/
 
 /*
 Kettle is the pod unit with Temp, Heater and Agitator
@@ -96,7 +91,6 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 				}
 				return nil
 			}
-			// use data channel
 			log.Infof("Increase: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
 		}
 	}
