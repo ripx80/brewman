@@ -6,10 +6,13 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/ripx80/brave/exit"
 	log "github.com/ripx80/brave/log/logger"
+	"github.com/ripx80/brave/work"
 	"github.com/ripx80/brewman/config"
 	"github.com/ripx80/brewman/pkgs/brew"
 	"github.com/ripx80/brewman/pkgs/recipe"
@@ -121,9 +124,10 @@ func Init(k *brew.Kettle, kettleConfig config.PodConfig) error {
 	return nil
 }
 
-func validate(stop chan struct{}, kettle *brew.Kettle, config config.PodConfig) error {
+func validate(stop chan struct{}, config config.PodConfig) error {
 	var err error
 	// Validate check all control instances and run a check programm with increase the water temp
+	kettle := &brew.Kettle{}
 	if err = Init(kettle, config); err != nil {
 		log.Errorf("Failed to init Kettle: %v", err)
 	}
@@ -140,6 +144,7 @@ func validate(stop chan struct{}, kettle *brew.Kettle, config config.PodConfig) 
 }
 
 func main() {
+	defer exit.Safe()
 
 	// config for cmd flags
 	cfg := configCmd{}
@@ -188,7 +193,7 @@ func main() {
 	sr.Arg("kettle", "turn on kettle (hotwater, masher, cooker)").HintOptions("hotwater", "masher", "cooker").StringVar(&cfg.kettle)
 
 	logr := logrus.New()
-	log := log.New(logr)
+	//log := log.New(logr)
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
@@ -203,7 +208,7 @@ func main() {
 		configFile, err = config.LoadFile(cfg.configFile)
 		if err != nil {
 			log.Errorf("canot load configuration file: ", err)
-			os.Exit(1)
+			exit.Exit(1)
 		}
 
 	} else {
@@ -212,7 +217,7 @@ func main() {
 			configFile, err = config.LoadFile(cfg.configFile)
 			if err != nil {
 				log.Errorf("canot load config file: ", err)
-				os.Exit(1)
+				exit.Exit(1)
 			}
 		}
 	}
@@ -231,37 +236,19 @@ func main() {
 		logr.Error("Config file validation failed: ", err)
 	}
 
+	log.Set(logr)
+
 	// threads, add data chan, error chan
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	stop := make(chan struct{})
-	kettle := &brew.Kettle{} //need for cleanup
-	//wg := new(sync.WaitGroup)
+	done := make(chan struct{})
 
-	// signal handler // only for threat jobs
-	go func() {
-		defer os.Exit(0) //add error channel
-		select {
-		case <-signals:
-		case <-stop:
-		}
-		close(stop)
-		log.Infof("cleanup in controller threat")
-		kettle.Off()
-		//wg.Wait() // wait for all workers
-		log.Infof("go exit")
-	}()
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	// watch threat, must have temp initilized... must call after a successful init of a Kettle
-	// think about a good implementation
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	if err := kettle.Watch(stop, 2); err != nil {
-	// 		log.Error(err)
-	// 		goExit(signals)
-	// 	}
-	// }()
+	wg := new(sync.WaitGroup)
+
+	// workaround
+	handle := false
 
 	switch kingpin.MustParse(a.Parse(os.Args[1:])) {
 
@@ -275,7 +262,8 @@ func main() {
 	case "set recipe":
 		configFile.Recipe.File, err = absolutePath(cfg.recipe)
 		if err != nil {
-			log.Errorf("set recipe error: ", err)
+			log.Panic(err)
+
 		}
 		configFile.Save(cfg.configFile)
 		fallthrough
@@ -283,8 +271,7 @@ func main() {
 	case "get recipe":
 		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
 		if err != nil {
-			log.Errorf("%v", err)
-			os.Exit(1)
+			log.Panic(err)
 		}
 		log.Infof(fmt.Sprintf("\n%s\n%s", configFile.Recipe, recipe))
 
@@ -292,267 +279,151 @@ func main() {
 		switch cfg.kettle {
 		case "hotwater":
 			log.Infof("stop hotwater")
-			if err = Init(kettle, configFile.Hotwater); err != nil {
+			if err := ControlOff(configFile.Hotwater); err != nil {
 				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
 			}
 		case "masher":
 			log.Infof("stop masher")
-			if err = Init(kettle, configFile.Masher); err != nil {
+			if err := ControlOff(configFile.Masher); err != nil {
 				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
 			}
 		case "cooker":
 			log.Infof("stop cooker")
-			if err = Init(kettle, configFile.Cooker); err != nil {
+			if err := ControlOff(configFile.Cooker); err != nil {
 				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
 			}
 		default:
 			log.Infof("stop all actions and Off")
-			if err = Init(kettle, configFile.Hotwater); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOff(configFile.Hotwater); err != nil {
+				log.Errorf("Failed to turn off Kettle:", err)
 			}
-			kettle.Off()
-
-			if err = Init(kettle, configFile.Masher); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOff(configFile.Masher); err != nil {
+				log.Errorf("Failed to turn off Kettle:", err)
 			}
-			kettle.Off()
-
-			if err = Init(kettle, configFile.Cooker); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOff(configFile.Cooker); err != nil {
+				log.Errorf("Failed to turn off Kettle:", err)
 			}
 		}
-		goExit(signals)
+
 	case "control on":
 		switch cfg.kettle {
 		case "hotwater":
 			log.Infof("turn on hotwater")
-			if err = Init(kettle, configFile.Hotwater); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOn(configFile.Hotwater); err != nil {
+				log.Errorf("Failed to turn on Kettle:", err)
 			}
 		case "masher":
-			log.Infof("turn on masher")
-			if err = Init(kettle, configFile.Masher); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOn(configFile.Masher); err != nil {
+				log.Errorf("Failed to turn on Kettle:", err)
 			}
 		case "cooker":
-			log.Infof("turn on cooker")
-			if err = Init(kettle, configFile.Cooker); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOn(configFile.Cooker); err != nil {
+				log.Errorf("Failed to turn on Kettle:", err)
 			}
 		default:
 			log.Infof("turn all kettle on")
-			if err = Init(kettle, configFile.Hotwater); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOn(configFile.Hotwater); err != nil {
+				log.Errorf("Failed to turn on Kettle:", err)
 			}
-			kettle.On()
-
-			if err = Init(kettle, configFile.Masher); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOn(configFile.Masher); err != nil {
+				log.Errorf("Failed to turn on Kettle:", err)
 			}
-			kettle.On()
 
-			if err = Init(kettle, configFile.Cooker); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
-				panic("USE SAFE FUNC")
+			if err := ControlOn(configFile.Cooker); err != nil {
+				log.Errorf("Failed to turn on Kettle:", err)
 			}
 		}
-		kettle.On()
+
 	case "control validate":
 
 		log.Infof("this test not uses recepies. Please test this otherwise")
 		switch cfg.kettle {
 		case "hotwater":
 			log.Infof("validate hotwater")
-			validate(stop, kettle, configFile.Hotwater)
+			validate(stop, configFile.Hotwater)
 		case "masher":
 			log.Infof("validate masher")
-			validate(stop, kettle, configFile.Masher)
+			validate(stop, configFile.Masher)
 		case "cooker":
 			log.Infof("validate cooker")
-			validate(stop, kettle, configFile.Cooker)
+			validate(stop, configFile.Cooker)
 		default:
 			log.Infof("validate hotwater")
-			validate(stop, kettle, configFile.Hotwater)
+			validate(stop, configFile.Hotwater)
 			log.Infof("validate masher")
-			validate(stop, kettle, configFile.Masher)
+			validate(stop, configFile.Masher)
 			log.Infof("validate cooker")
-			validate(stop, kettle, configFile.Cooker)
+			validate(stop, configFile.Cooker)
 		}
 
-		// threat and temp watcher work
 	case "hotwater start":
+		go func() {
+			defer wg.Done()
+			wg.Add(1)
+			if err := Hotwater(configFile, stop); err != nil {
+				log.Errorf("error: %v\n", err)
+			} else {
+				log.Infof("Hotwater finished successful")
+			}
+			done <- struct{}{}
+		}()
 
-		if err = Init(kettle, configFile.Hotwater); err != nil {
-			log.Errorf("Failed to init Kettle:", err)
-			panic("USE SAFE FUNC")
-		}
-		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
-		if err != nil {
-			log.Errorf("%v", err)
-			os.Exit(1)
-		}
-
-		log.Infof("using recipe: ", recipe.Global.Name)
-		log.Infof("main water: %f -->  grouting: %f", recipe.Water.MainCast, recipe.Water.Grouting)
-
-		if kettle.Agitator != nil && !kettle.Agitator.State() {
-			kettle.Agitator.On()
-		}
-
-		if err := kettle.TempUp(stop, configFile.Global.HotwaterTemperatur); err != nil {
-			log.Errorf("%v", err)
-			goExit(signals)
-		}
-
-		if err := kettle.TempHold(stop, configFile.Global.HotwaterTemperatur, 0); err != nil {
-			log.Errorf("%v", err)
-			goExit(signals)
-		}
-
-		goExit(signals)
+		handle = true
 
 	case "mash start":
-		if err = Init(kettle, configFile.Masher); err != nil {
-			log.Errorf("Failed to init Kettle:", err)
-			panic("USE SAFE FUNC")
-		}
-
-		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
-		if err != nil {
-			log.Errorf("%v", err)
-			panic("USE SAFE FUNC")
-			//os.Exit(1)
-		}
-
-		log.Infof("using recipe: ", recipe.Global.Name)
-		log.Infof("mash information: ", recipe.Mash)
-
-		if !confirm("start mashing? <y/n>") {
-			goExit(signals)
-		}
-
-		if kettle.Agitator != nil && !kettle.Agitator.State() {
-			kettle.Agitator.On()
-		}
-
-		if err := kettle.TempUp(stop, recipe.Mash.InTemperatur); err != nil {
-			log.Errorf("%v", err)
-			goExit(signals)
-		}
-
-		if !confirm("malt added? continue? <y/n>") {
-			goExit(signals)
-		}
-
-		for num, rast := range recipe.Mash.Rests {
-			log.Infof("Rast %d: Time: %d Temperatur:%f\n", num, rast.Time, rast.Temperatur)
-
-			if err := kettle.TempUp(stop, rast.Temperatur); err != nil {
-				log.Errorf("%v", err)
-				goExit(signals)
+		go func() {
+			defer wg.Done()
+			wg.Add(1)
+			if err := Mash(configFile, stop); err != nil {
+				log.Errorf("error: %v\n", err)
+			} else {
+				log.Infof("Mashing finished successful")
 			}
 
-			if err := kettle.TempHold(stop, rast.Temperatur, time.Duration(rast.Time*60)*time.Second); err != nil {
-				log.Errorf("%v", err)
-				goExit(signals)
-			}
-
-		}
-
-		log.Infof("Mashing finished successful")
-		goExit(signals)
+			done <- struct{}{}
+		}()
+		handle = true
 
 	case "mash rast":
+		go func() {
+			defer wg.Done()
+			wg.Add(1)
+			if err := MashRast(configFile, stop, *(rastNum)); err != nil {
+				fmt.Printf("error: %v\n", err)
+			} else {
+				log.Infof("Rast finished successful")
+			}
+			done <- struct{}{}
+		}()
 
-		num := *(rastNum)
-
-		if err = Init(kettle, configFile.Masher); err != nil {
-			log.Errorf("Failed to init Kettle:", err)
-			panic("USE SAFE FUNC")
-		}
-
-		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
-		if err != nil {
-			log.Errorf("%v", err)
-			panic("USE SAFE FUNC")
-			//os.Exit(1)
-		}
-
-		if num > 8 || num <= 0 {
-			log.Errorf("rast number out of range [1-8]")
-			panic("USE SAFE FUNC")
-			//os.Exit(1)
-		}
-
-		if len(recipe.Mash.Rests) < num {
-			log.Errorf("rast number not in recipe")
-			panic("USE SAFE FUNC")
-			//os.Exit(1)
-		}
-
-		log.Infof("jump to rast number: %d", num)
-		log.Infof("using recipe: ", recipe.Global.Name)
-
-		rast := recipe.Mash.Rests[num-1]
-		log.Infof("Rast %d: Time: %d Temperatur: %.2f\n", num, rast.Time, rast.Temperatur)
-		if err := kettle.TempUp(stop, rast.Temperatur); err != nil {
-			log.Errorf("%v", err)
-			goExit(signals)
-		}
-
-		if err := kettle.TempHold(stop, rast.Temperatur, time.Duration(rast.Time*60)*time.Second); err != nil {
-			log.Errorf("%v", err)
-			goExit(signals)
-		}
-
-		log.Infof("Rast finished successful")
-		goExit(signals)
+		handle = true
 
 	case "cook start":
-		if err = Init(kettle, configFile.Cooker); err != nil {
-			log.Errorf("Failed to init Kettle:", err)
-			panic("USE SAFE FUNC")
-		}
-
-		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
-		if err != nil {
-			log.Errorf("%v", err)
-			panic("USE SAFE FUNC")
-		}
-
-		log.Infof("using recipe: ", recipe.Global.Name)
-		log.Infof("cook information: ", recipe.Cook)
-
-		if !confirm("start cooking? <y/n>") {
-			goExit(signals)
-		}
-
-		if kettle.Agitator != nil && !kettle.Agitator.State() {
-			kettle.Agitator.On()
-		}
-
-		if err := kettle.TempUp(stop, configFile.Global.CookingTemperatur); err != nil {
-			log.Errorf("%v", err)
-			goExit(signals)
-		}
-
-		if err := kettle.TempHold(stop, configFile.Global.CookingTemperatur, time.Duration(recipe.Cook.Time*60)*time.Second); err != nil {
-			log.Errorf("%v", err)
-			goExit(signals)
-		}
-
-		log.Infof("Cooking finished successful")
-		goExit(signals)
+		go func() {
+			defer wg.Done()
+			wg.Add(1)
+			if err := Cook(configFile, stop); err != nil {
+				fmt.Printf("error: %v\n", err)
+			} else {
+				log.Infof("Cooking finished successful")
+			}
+			done <- struct{}{}
+		}()
+		handle = true
 	}
+
+	// main handle signals and routines, handle is a workaround
+	if handle {
+		for {
+			select {
+			case <-signals:
+			case <-stop:
+			case <-done:
+			}
+			close(stop)
+			work.WaitTimeout(wg, 1*time.Second) // wait for all workers with timeout
+			exit.Exit(0)                        // check the return
+		}
+	}
+
 }

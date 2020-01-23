@@ -81,7 +81,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 			}
 
 			if failcnt >= 3 {
-				log.Warn("Temperature not increased but the heater is on. Check your hardware setup")
+				log.Errorf("Temperature not increased but the heater is on. Check your hardware setup")
 				failcnt = 0
 			}
 
@@ -131,7 +131,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 			}
 
 			if failcnt >= 3 {
-				log.Warn("Temperature not increased but the heater is on. Check your hardware setup")
+				log.Errorf("Temperature not increased but the heater is on. Check your hardware setup")
 				failcnt = 0
 			}
 
@@ -148,11 +148,11 @@ func (k *Kettle) TempSet(temp float64) (current float64, err error) {
 		return 0, err
 	}
 	if current < temp && !k.Heater.State() {
-		log.Debug("Heater On")
+		log.Infof("Heater On")
 		k.Heater.On()
 	}
 	if current > temp && k.Heater.State() {
-		log.Debug("Heater Off")
+		log.Infof("Heater Off")
 		k.Heater.Off()
 	}
 	return

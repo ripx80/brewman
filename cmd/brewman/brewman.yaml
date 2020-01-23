@@ -33,4 +33,4 @@ Masher:
     Address: /sys/bus/w1/devices/28-0416c4dec6ff/w1_slave
     Device: dummy
 Recipe:
-  File: /home/rip/brewman/examples/TagTeamIPA.yaml
+  File: /home/rip/go/src/github.com/ripx80/brewman/examples/TagTeamIPA.yaml
