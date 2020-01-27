@@ -21,8 +21,10 @@ func Cook(configFile *config.Config, stop chan struct{}) error {
 		return err
 	}
 
-	log.Infof("using recipe: ", recipe.Global.Name)
-	log.Infof("cook information: ", recipe.Cook)
+	log.WithFields(log.Fields{
+		"recipe": recipe.Global.Name,
+	}).Info("cook information")
+	log.Info(recipe.Cook) // not a nice output
 
 	if !confirm("start cooking? <y/n>") {
 		return nil

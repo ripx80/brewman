@@ -19,8 +19,11 @@ func Hotwater(configFile *config.Config, stop chan struct{}) error {
 		return err
 	}
 
-	log.Infof("using recipe: ", recipe.Global.Name)
-	log.Infof("main water: %f -->  grouting: %f", recipe.Water.MainCast, recipe.Water.Grouting)
+	log.WithFields(log.Fields{
+		"recipe":   recipe.Global.Name,
+		"mainCast": recipe.Water.MainCast,
+		"grouting": recipe.Water.Grouting,
+	}).Info("hotwater information")
 
 	if kettle.Agitator != nil && !kettle.Agitator.State() {
 		kettle.Agitator.On()

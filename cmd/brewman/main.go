@@ -12,6 +12,7 @@ import (
 
 	"github.com/ripx80/brave/exit"
 	log "github.com/ripx80/brave/log/logger"
+	logrusBrave "github.com/ripx80/brave/log/logrus"
 	"github.com/ripx80/brave/work"
 	"github.com/ripx80/brewman/config"
 	"github.com/ripx80/brewman/pkgs/brew"
@@ -38,13 +39,15 @@ func confirm(msg string) bool {
 	opt := "use y/n"
 	for {
 		var response string
-		log.Infof(msg)
+		log.Info(msg)
 		l, err := fmt.Scan(&response)
 		if err != nil {
-			log.Errorf("%v", err)
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Error("canot read response")
 		}
 		if l > 3 {
-			log.Infof(opt) // was a warning
+			log.Info(opt) // was a warning
 			continue
 		}
 		response = strings.ToLower(response)
@@ -58,7 +61,9 @@ func confirm(msg string) bool {
 		case "no":
 			return false
 		default:
-			log.Infof(opt) // was a warn
+			log.WithFields(log.Fields{
+				"option": opt,
+			}).Warn("no option")
 		}
 
 	}
@@ -124,20 +129,19 @@ func Init(k *brew.Kettle, kettleConfig config.PodConfig) error {
 	return nil
 }
 
+/*Validate check all control instances and run a check programm with increase the water temp*/
 func validate(stop chan struct{}, config config.PodConfig) error {
 	var err error
-	// Validate check all control instances and run a check programm with increase the water temp
+
 	kettle := &brew.Kettle{}
 	if err = Init(kettle, config); err != nil {
-		log.Errorf("Failed to init Kettle: %v", err)
+		return err
 	}
 	tempTo, err := kettle.Temp.Get()
 	if err != nil {
-		log.Errorf("validate: get no temp from sensor")
 		return err
 	}
 	if err = kettle.TempUp(stop, tempTo+1); err != nil {
-		log.Errorf("validate: increase temp failed")
 		return err
 	}
 	return nil
@@ -193,11 +197,12 @@ func main() {
 	sr.Arg("kettle", "turn on kettle (hotwater, masher, cooker)").HintOptions("hotwater", "masher", "cooker").StringVar(&cfg.kettle)
 
 	logr := logrus.New()
-	//log := log.New(logr)
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
-		log.Errorf("Error parsing commandline arguments: %v", err)
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("parsing commandline arguments")
 		a.Usage(os.Args[1:])
 	}
 
@@ -207,7 +212,10 @@ func main() {
 	if cfg.configFile != "" {
 		configFile, err = config.LoadFile(cfg.configFile)
 		if err != nil {
-			log.Errorf("canot load configuration file: ", err)
+			log.WithFields(log.Fields{
+				"error":      err,
+				"configFile": cfg.configFile,
+			}).Error("can not load configuration file")
 			exit.Exit(1)
 		}
 
@@ -216,12 +224,15 @@ func main() {
 		if _, err := os.Stat(cfg.configFile); err == nil {
 			configFile, err = config.LoadFile(cfg.configFile)
 			if err != nil {
-				log.Errorf("canot load config file: ", err)
+				log.WithFields(log.Fields{
+					"error":      err,
+					"configFile": cfg.configFile,
+				}).Error("can not load configuration file")
 				exit.Exit(1)
 			}
 		}
 	}
-
+	// setting up the logger
 	if *cfg.debug {
 		logr.SetLevel(logrus.DebugLevel)
 	}
@@ -233,10 +244,14 @@ func main() {
 	}
 
 	if err := validator.Validate(configFile); err != nil {
-		logr.Error("Config file validation failed: ", err)
+		log.WithFields(log.Fields{
+			"error":      err,
+			"configFile": cfg.configFile,
+		}).Error("config file validation failed")
 	}
 
-	log.Set(logr)
+	// use a wrapper for the WithFields func
+	log.Set(logrusBrave.Configured(logr))
 
 	// threads, add data chan, error chan
 	signals := make(chan os.Signal, 1)
@@ -257,103 +272,196 @@ func main() {
 		fallthrough
 
 	case "get config":
-		log.Infof(fmt.Sprintf("\n%s\n%s", cfg.configFile, configFile))
+		fmt.Print(configFile)
 
 	case "set recipe":
 		configFile.Recipe.File, err = absolutePath(cfg.recipe)
 		if err != nil {
-			log.Panic(err)
-
+			log.WithFields(log.Fields{
+				"error":  err,
+				"recipe": cfg.recipe,
+				"config": cfg.configFile,
+			}).Error("can not get recipe file")
+			exit.Exit(1)
 		}
-		configFile.Save(cfg.configFile)
-		fallthrough
+		// todo parsing recipe and check content
+
+		if err = configFile.Save(cfg.configFile); err != nil {
+			log.WithFields(log.Fields{
+				"error":      err,
+				"configFile": cfg.configFile,
+			}).Error("set recipe in configuration")
+			exit.Exit(1)
+		}
 
 	case "get recipe":
 		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
 		if err != nil {
-			log.Panic(err)
+			log.WithFields(log.Fields{
+				"error":  err,
+				"recipe": configFile.Recipe.File,
+			}).Error("get recipe")
+			exit.Exit(1)
 		}
-		log.Infof(fmt.Sprintf("\n%s\n%s", configFile.Recipe, recipe))
+		fmt.Print(recipe)
 
+		// do this in a function with return err and log in main
 	case "control off":
 		switch cfg.kettle {
 		case "hotwater":
-			log.Infof("stop hotwater")
+			log.WithFields(log.Fields{
+				"kettle": "hotwater",
+			}).Info("control off")
 			if err := ControlOff(configFile.Hotwater); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "hotwater",
+				}).Error("control off failed")
 			}
 		case "masher":
-			log.Infof("stop masher")
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+			}).Info("control off")
 			if err := ControlOff(configFile.Masher); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "masher",
+				}).Error("control off failed")
 			}
 		case "cooker":
-			log.Infof("stop cooker")
+			log.WithFields(log.Fields{
+				"kettle": "cooker",
+			}).Info("control off")
+
 			if err := ControlOff(configFile.Cooker); err != nil {
-				log.Errorf("Failed to init Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "cooker",
+				}).Error("control off failed")
 			}
 		default:
-			log.Infof("stop all actions and Off")
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+			}).Info("stop all kettle")
+
 			if err := ControlOff(configFile.Hotwater); err != nil {
-				log.Errorf("Failed to turn off Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "hotwater",
+				}).Error("control off failed")
 			}
 			if err := ControlOff(configFile.Masher); err != nil {
-				log.Errorf("Failed to turn off Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "masher",
+				}).Error("control off failed")
 			}
 			if err := ControlOff(configFile.Cooker); err != nil {
-				log.Errorf("Failed to turn off Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "cooker",
+				}).Error("control off failed")
 			}
 		}
 
 	case "control on":
 		switch cfg.kettle {
 		case "hotwater":
-			log.Infof("turn on hotwater")
+			log.WithFields(log.Fields{
+				"kettle": "hotwater",
+			}).Info("control on")
+
 			if err := ControlOn(configFile.Hotwater); err != nil {
-				log.Errorf("Failed to turn on Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "hotwater",
+				}).Error("control off failed")
+
 			}
 		case "masher":
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+			}).Info("control on")
 			if err := ControlOn(configFile.Masher); err != nil {
-				log.Errorf("Failed to turn on Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "masher",
+				}).Error("control off failed")
 			}
 		case "cooker":
+			log.WithFields(log.Fields{
+				"kettle": "cooker",
+			}).Info("control on")
 			if err := ControlOn(configFile.Cooker); err != nil {
-				log.Errorf("Failed to turn on Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "cooker",
+				}).Error("control off failed")
 			}
 		default:
-			log.Infof("turn all kettle on")
+			log.WithFields(log.Fields{
+				"kettle": "hotwater",
+			}).Info("turn all kettle on")
 			if err := ControlOn(configFile.Hotwater); err != nil {
-				log.Errorf("Failed to turn on Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "hotwater",
+				}).Error("control off failed")
 			}
 			if err := ControlOn(configFile.Masher); err != nil {
-				log.Errorf("Failed to turn on Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "masher",
+				}).Error("control off failed")
 			}
 
 			if err := ControlOn(configFile.Cooker); err != nil {
-				log.Errorf("Failed to turn on Kettle:", err)
+				log.WithFields(log.Fields{
+					"error":  err,
+					"kettle": "cooker",
+				}).Error("control off failed")
 			}
 		}
 
 	case "control validate":
 
-		log.Infof("this test not uses recepies. Please test this otherwise")
+		log.Warn("this test not uses recepies. Please test this otherwise")
 		switch cfg.kettle {
 		case "hotwater":
-			log.Infof("validate hotwater")
-			validate(stop, configFile.Hotwater)
+			if err := validate(stop, configFile.Hotwater); err != nil {
+				log.WithFields(log.Fields{
+					"kettle": "hotwater",
+				}).Error("validation failed")
+			}
 		case "masher":
-			log.Infof("validate masher")
-			validate(stop, configFile.Masher)
+			if err := validate(stop, configFile.Masher); err != nil {
+				log.WithFields(log.Fields{
+					"kettle": "masher",
+				}).Error("validation failed")
+			}
+
 		case "cooker":
-			log.Infof("validate cooker")
-			validate(stop, configFile.Cooker)
+			if err := validate(stop, configFile.Cooker); err != nil {
+				log.WithFields(log.Fields{
+					"kettle": "cooker",
+				}).Error("validation failed")
+			}
 		default:
-			log.Infof("validate hotwater")
-			validate(stop, configFile.Hotwater)
-			log.Infof("validate masher")
-			validate(stop, configFile.Masher)
-			log.Infof("validate cooker")
-			validate(stop, configFile.Cooker)
+			if err := validate(stop, configFile.Hotwater); err != nil {
+				log.WithFields(log.Fields{
+					"kettle": "hotwater",
+				}).Error("validation failed")
+			}
+			if err := validate(stop, configFile.Masher); err != nil {
+				log.WithFields(log.Fields{
+					"kettle": "masher",
+				}).Error("validation failed")
+			}
+			if err := validate(stop, configFile.Cooker); err != nil {
+				log.WithFields(log.Fields{
+					"kettle": "cooker",
+				}).Error("validation failed")
+			}
 		}
 
 	case "hotwater start":
@@ -361,9 +469,10 @@ func main() {
 			defer wg.Done()
 			wg.Add(1)
 			if err := Hotwater(configFile, stop); err != nil {
-				log.Errorf("error: %v\n", err)
-			} else {
-				log.Infof("Hotwater finished successful")
+				log.WithFields(log.Fields{
+					"kettle": "hotwater",
+					"error":  err,
+				}).Error("kettle func failed")
 			}
 			done <- struct{}{}
 		}()
@@ -375,11 +484,11 @@ func main() {
 			defer wg.Done()
 			wg.Add(1)
 			if err := Mash(configFile, stop); err != nil {
-				log.Errorf("error: %v\n", err)
-			} else {
-				log.Infof("Mashing finished successful")
+				log.WithFields(log.Fields{
+					"kettle": "masher",
+					"error":  err,
+				}).Error("kettle func failed")
 			}
-
 			done <- struct{}{}
 		}()
 		handle = true
@@ -389,9 +498,10 @@ func main() {
 			defer wg.Done()
 			wg.Add(1)
 			if err := MashRast(configFile, stop, *(rastNum)); err != nil {
-				fmt.Printf("error: %v\n", err)
-			} else {
-				log.Infof("Rast finished successful")
+				log.WithFields(log.Fields{
+					"kettle": "masher",
+					"error":  err,
+				}).Error("kettle func failed")
 			}
 			done <- struct{}{}
 		}()
@@ -403,9 +513,10 @@ func main() {
 			defer wg.Done()
 			wg.Add(1)
 			if err := Cook(configFile, stop); err != nil {
-				fmt.Printf("error: %v\n", err)
-			} else {
-				log.Infof("Cooking finished successful")
+				log.WithFields(log.Fields{
+					"kettle": "cooker",
+					"error":  err,
+				}).Error("kettle func failed")
 			}
 			done <- struct{}{}
 		}()

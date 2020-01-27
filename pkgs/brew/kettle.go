@@ -81,7 +81,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 			}
 
 			if failcnt >= 3 {
-				log.Errorf("Temperature not increased but the heater is on. Check your hardware setup")
+				log.Error("Temperature not increased but the heater is on. Check your hardware setup")
 				failcnt = 0
 			}
 
@@ -91,7 +91,11 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 				}
 				return nil
 			}
-			log.Infof("Increase: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
+			log.WithFields(log.Fields{
+				"temperatur":   temp,
+				"toTemperatur": tempTo,
+				"state":        k.Heater.State(),
+			}).Info("increase temperatur")
 		}
 	}
 }
@@ -131,11 +135,15 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 			}
 
 			if failcnt >= 3 {
-				log.Errorf("Temperature not increased but the heater is on. Check your hardware setup")
+				log.Error("temperature not increased but the heater is on. check your hardware setup")
 				failcnt = 0
 			}
 
-			log.Infof("Hold: %f --> %f State: %t\n", temp, tempTo, k.Heater.State())
+			log.WithFields(log.Fields{
+				"temperatur":  temp,
+				"destination": tempTo,
+				"state":       k.Heater.State(),
+			}).Info("holding temperatur")
 		}
 	}
 }
@@ -148,11 +156,11 @@ func (k *Kettle) TempSet(temp float64) (current float64, err error) {
 		return 0, err
 	}
 	if current < temp && !k.Heater.State() {
-		log.Infof("Heater On")
+		log.Debug("Heater On")
 		k.Heater.On()
 	}
 	if current > temp && k.Heater.State() {
-		log.Infof("Heater Off")
+		log.Debug("Heater Off")
 		k.Heater.Off()
 	}
 	return

@@ -22,8 +22,10 @@ func Mash(configFile *config.Config, stop chan struct{}) error {
 		return err
 	}
 
-	log.Infof("using recipe: ", recipe.Global.Name)
-	log.Infof("mash information: ", recipe.Mash)
+	log.WithFields(log.Fields{
+		"recipe":      recipe.Global.Name,
+		"recipe.Mash": recipe.Mash,
+	}).Info("mash information")
 
 	if !confirm("start mashing? <y/n>") {
 		return nil
@@ -42,7 +44,12 @@ func Mash(configFile *config.Config, stop chan struct{}) error {
 	}
 
 	for num, rast := range recipe.Mash.Rests {
-		log.Infof("Rast %d: Time: %d Temperatur:%f\n", num, rast.Time, rast.Temperatur)
+
+		log.WithFields(log.Fields{
+			"number":     num,
+			"time":       rast.Time,
+			"temperatur": rast.Temperatur,
+		}).Info("rast")
 
 		if err := kettle.TempUp(stop, rast.Temperatur); err != nil {
 			return err
@@ -75,12 +82,15 @@ func MashRast(configFile *config.Config, stop chan struct{}, rastNum int) error 
 	if len(recipe.Mash.Rests) < num {
 		return fmt.Errorf("rast number not in recipe")
 	}
-
-	log.Infof("jump to rast number: %d", num)
-	log.Infof("using recipe: ", recipe.Global.Name)
-
 	rast := recipe.Mash.Rests[num-1]
-	log.Infof("Rast %d: Time: %d Temperatur: %.2f\n", num, rast.Time, rast.Temperatur)
+
+	log.WithFields(log.Fields{
+		"recipe":     recipe.Global.Name,
+		"number":     num,
+		"time":       rast.Time,
+		"temperatur": rast.Temperatur,
+	}).Info("jump to rast")
+
 	if err := kettle.TempUp(stop, rast.Temperatur); err != nil {
 		return err
 	}
