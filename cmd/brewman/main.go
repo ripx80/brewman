@@ -94,6 +94,14 @@ func Init(k *brew.Kettle, kettleConfig config.PodConfig) error {
 		if err != nil {
 			return err
 		}
+	case "external":
+		_, err = os.Stat(kettleConfig.Control.Address)
+		if err != nil {
+			return err
+		}
+		k.Heater = &brew.External{Cmd: kettleConfig.Control.Address}
+	default:
+		return fmt.Errorf("unsupported control device: %s", kettleConfig.Control.Device)
 	}
 
 	// Agiator section
@@ -105,7 +113,14 @@ func Init(k *brew.Kettle, kettleConfig config.PodConfig) error {
 		if err != nil {
 			return err
 		}
+	case "external":
+		_, err = os.Stat(kettleConfig.Control.Address)
+		if err != nil {
+			return err
+		}
+		k.Agitator = &brew.External{Cmd: kettleConfig.Control.Address}
 	case "":
+		// can be null no error
 		if kettleConfig.Agiator.Address != "" {
 			return fmt.Errorf("failed setup agiator, device not set: %s", kettleConfig.Agiator.Address)
 		}
@@ -120,7 +135,6 @@ func Init(k *brew.Kettle, kettleConfig config.PodConfig) error {
 		if err != nil {
 			return err
 		}
-
 	case "dummy":
 		k.Temp = &brew.TempDummy{Name: "tempdummy", Fn: k.Heater.State, Temp: 20}
 	case "default":

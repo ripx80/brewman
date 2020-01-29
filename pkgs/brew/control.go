@@ -2,6 +2,7 @@ package brew
 
 import (
 	"fmt"
+	"os/exec"
 
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
@@ -28,6 +29,12 @@ type SSR struct {
 SSRDummy is a dummy SSR relay
 */
 type SSRDummy struct {
+	state bool
+}
+
+/*External implements a external programm to control. no args, fix*/
+type External struct {
+	Cmd   string
 	state bool
 }
 
@@ -93,4 +100,29 @@ func SSRReg(address string) (*SSR, error) {
 		return nil, fmt.Errorf("failed to find heater pin: %s", address)
 	}
 	return &SSR{Pin: p}, nil
+}
+
+/*On executes the given external programm with args no output*/
+func (e *External) On() error {
+	cmd := exec.Command(e.Cmd, "1")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	e.state = true
+	return nil
+}
+
+/*Off executes the given external programm with args no output*/
+func (e *External) Off() error {
+	cmd := exec.Command(e.Cmd, "0")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	e.state = false
+	return nil
+}
+
+/*State returns the current state of external cmd*/
+func (e *External) State() bool {
+	return e.state
 }
