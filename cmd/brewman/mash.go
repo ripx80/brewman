@@ -10,6 +10,7 @@ import (
 	"github.com/ripx80/brewman/pkgs/recipe"
 )
 
+/*Mash implement the mash program*/
 func Mash(configFile *config.Config, stop chan struct{}) error {
 	var err error
 	kettle := &brew.Kettle{}
@@ -62,6 +63,7 @@ func Mash(configFile *config.Config, stop chan struct{}) error {
 	return nil
 }
 
+/*MashRast can jump to a specific rast*/
 func MashRast(configFile *config.Config, stop chan struct{}, rastNum int) error {
 	num := rastNum // improve
 	var err error

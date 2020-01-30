@@ -9,6 +9,7 @@ import (
 	"github.com/ripx80/brewman/pkgs/recipe"
 )
 
+/*Cook implements cooking programm*/
 func Cook(configFile *config.Config, stop chan struct{}) error {
 	var err error
 	kettle := &brew.Kettle{}

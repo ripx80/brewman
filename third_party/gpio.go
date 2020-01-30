@@ -8,7 +8,7 @@ import (
 	"github.com/martinohmann/rfoutlet/pkg/gpio"
 )
 
-type TransmitOptions struct {
+type transmitOptions struct {
 	PulseLength uint
 	GpioPin     uint
 	Protocol    int
@@ -16,7 +16,7 @@ type TransmitOptions struct {
 
 func main() {
 
-	options := &TransmitOptions{
+	options := &transmitOptions{
 		PulseLength: gpio.DefaultPulseLength,
 		GpioPin:     gpio.DefaultReceivePin,
 		Protocol:    gpio.DefaultProtocol,

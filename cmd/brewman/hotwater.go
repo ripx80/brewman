@@ -7,7 +7,7 @@ import (
 	"github.com/ripx80/brewman/pkgs/recipe"
 )
 
-// remove config file from here!
+/*Hotwater implements the hotwater programm, remove config file from here!*/
 func Hotwater(configFile *config.Config, stop chan struct{}) error {
 	var err error
 	kettle := &brew.Kettle{}

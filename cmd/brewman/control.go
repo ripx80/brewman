@@ -5,6 +5,7 @@ import (
 	"github.com/ripx80/brewman/pkgs/brew"
 )
 
+/*ControlOff turn a cattle off*/
 func ControlOff(podConfig config.PodConfig) error {
 	kettle := &brew.Kettle{}
 	if err := Init(kettle, podConfig); err != nil {
@@ -14,6 +15,7 @@ func ControlOff(podConfig config.PodConfig) error {
 	return nil
 }
 
+/*ControlOn turn a kettle on*/
 func ControlOn(podConfig config.PodConfig) error {
 	kettle := &brew.Kettle{}
 	if err := Init(kettle, podConfig); err != nil {
