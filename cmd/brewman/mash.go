@@ -24,9 +24,9 @@ func Mash(configFile *config.Config, stop chan struct{}) error {
 	}
 
 	log.WithFields(log.Fields{
-		"recipe":      recipe.Global.Name,
-		"recipe.Mash": recipe.Mash,
-	}).Info("mash information")
+		"recipe": recipe.Global.Name,
+	}).Info("mash information:")
+	fmt.Println(recipe.Mash)
 
 	if !confirm("start mashing? <y/n>") {
 		return nil

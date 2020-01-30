@@ -79,8 +79,9 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 			if !k.TempCompare(last, temp) {
 				failcnt++
 			}
-			//something buggy... say allway
-			if failcnt >= 3 {
+			last = temp
+
+			if failcnt >= 6 {
 				log.Error("Temperature not increased but the heater is on. Check your hardware setup")
 				failcnt = 0
 			}
