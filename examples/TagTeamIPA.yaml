@@ -61,11 +61,11 @@ Mash:
   OutTemperatur: 78
   Rests:
     - Temperatur: 55
-      Time: 10
+      Time: 1
     - Temperatur: 68
-      Time: 60
+      Time: 1
     - Temperatur: 78
-      Time: 10
+      Time: 1
 Water:
   Grouting: 11
   MainCast: 19

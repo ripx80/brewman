@@ -40,18 +40,18 @@ type TempDummy struct {
 }
 
 func down(x float64) float64 {
-	return x - 3
+	return x - 1.4
 }
 
 func up(x float64) float64 {
-	return x + 3
+	return x + 1.4
 }
 
 func upDown(x float64) float64 {
 	if math.Mod(x, 2.0) > 0 {
-		return x + 3.0
+		return x + 1.4
 	}
-	return x - 3.0
+	return x - 1.4
 }
 
 /*

@@ -44,13 +44,24 @@ func Mash(configFile *config.Config, stop chan struct{}) error {
 		return nil
 	}
 
+	// check if rlen is min 2 in recipe check!
 	for num, rast := range recipe.Mash.Rests {
 
+		// before go to high... check with jod
+		if rast.Temperatur == recipe.Mash.OutTemperatur {
+			for !confirm("positive jod check? <y/n>") {
+				log.Info("hold for 10min more")
+				if err := kettle.TempHold(stop, rast.Temperatur, time.Duration(configFile.Global.HoldTemperatur*60)*time.Second); err != nil {
+					return err
+				}
+			}
+		}
+
 		log.WithFields(log.Fields{
-			"number":     num,
+			"number":     num + 1,
 			"time":       rast.Time,
 			"temperatur": rast.Temperatur,
-		}).Info("rast")
+		}).Info("rast number: ", num+1)
 
 		if err := kettle.TempUp(stop, rast.Temperatur); err != nil {
 			return err

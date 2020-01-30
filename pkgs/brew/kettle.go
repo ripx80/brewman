@@ -1,6 +1,7 @@
 package brew
 
 import (
+	"fmt"
 	"time"
 
 	log "github.com/ripx80/brave/log/logger"
@@ -45,7 +46,7 @@ func (k *Kettle) Off() {
 TempCompare checks the temp and sate of the kettle
 */
 func (k *Kettle) TempCompare(last float64, temp float64) bool {
-	return (k.Heater.State() && temp < (last)) || (!k.Heater.State() && temp > (last))
+	return (k.Heater.State() && temp > (last)) || (!k.Heater.State() && temp < (last))
 }
 
 /*
@@ -92,10 +93,12 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 				}
 				return nil
 			}
+			// use zstate and not state because logrus log in alphabetical order. workaround sry
 			log.WithFields(log.Fields{
-				"temperatur":   temp,
-				"toTemperatur": tempTo,
-				"state":        k.Heater.State(),
+				"temperatur":  fmt.Sprintf("%0.2f", temp),
+				"destination": tempTo,
+				"zstate":      k.Heater.State(),
+				"fail":        failcnt,
 			}).Info("increase temperatur")
 		}
 	}
@@ -107,7 +110,6 @@ Its a blocking function which you can stop with the stop channel
 */
 func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Duration) error {
 	var (
-		last    float64
 		temp    float64
 		failcnt uint8
 		err     error
@@ -131,19 +133,22 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 			if temp, err = k.TempSet(tempTo); err != nil {
 				return err
 			}
-			if !k.TempCompare(last, temp) {
+
+			// if you have 1.5 difference on holding, increase counter
+			if k.Heater.State() && temp <= (tempTo-1.5) {
 				failcnt++
 			}
 
 			if failcnt >= 3 {
-				log.Error("temperature not increased but the heater is on. check your hardware setup")
+				log.Error("temperature not holding but the heater is on. check your hardware setup")
 				failcnt = 0
 			}
 
 			log.WithFields(log.Fields{
-				"temperatur":  temp,
+				"temperatur":  fmt.Sprintf("%0.2f", temp),
 				"destination": tempTo,
-				"state":       k.Heater.State(),
+				"zstate":      k.Heater.State(),
+				"fail":        failcnt,
 			}).Info("holding temperatur")
 		}
 	}

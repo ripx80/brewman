@@ -47,12 +47,12 @@ describe comming soon
 - [x] remove in mash config dep
 - [x] document exported funcs, check private
 - [x] weird control. if something happen crazy (heater on -> temp down) log warnings
+- [x] correct os.Exit codes
+- [x] add data channel to lib(not abroved)
+- [x] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
 - [ ] recipies: calculate other water/size informations
-- [ ] correct os.Exit codes
 - [ ] add more debug informations
 - [ ] add all test files, use testify and testify/mocking
-- [ ] add data channel to lib
-- [ ] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
 - [ ] improve cmd parsing, change to cobra (check structure)
 - [ ] add 433mh control unit with make file (external program)

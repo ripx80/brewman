@@ -12,6 +12,7 @@ Global:
   CookingTemperatur: 97.5
   HotwaterTemperatur: 76
   TemperaturUnit: Celsius
+  HoldTemperatur: 1
 Hotwater:
   Agiator:
     Address: ""
