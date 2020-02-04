@@ -193,14 +193,17 @@ func main() {
 
 	sc = a.Command("mash", "mash brew steps")
 	sc.Command("start", "start the mash precedure")
+	sc.Command("state", "return state of masher")
 	sr = sc.Command("rast", "jump to specific rast")
 	rastNum := sr.Arg("num", "rast number [1-8]").Required().Int()
 
 	sc = a.Command("hotwater", "make hotwater in kettle")
 	sc.Command("start", "start the hotwater precedure")
+	sc.Command("state", "return state of hotwater")
 
 	sc = a.Command("cook", "cooking your stuff")
 	sc.Command("start", "start the cooking precedure")
+	sc.Command("state", "return state of cooker")
 
 	sc = a.Command("control", "control hardware")
 	sr = sc.Command("off", "stop all actions")
@@ -477,6 +480,17 @@ func main() {
 				}).Error("validation failed")
 			}
 		}
+	case "hotwater state":
+		// need a init kettle for hotwater
+		k := &brew.Kettle{}
+		if err = Init(k, configFile.Hotwater); err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "hotwater",
+				"error":  err,
+			}).Error("init kettle failed")
+		}
+		temp, _ := k.Temp.Get() //handle error
+		fmt.Printf("temp=%0.2f state=%t \n", temp, k.Heater.State())
 
 	case "hotwater start":
 		go func() {
@@ -492,6 +506,18 @@ func main() {
 		}()
 
 		handle = true
+
+	case "mash state":
+		// need a init kettle for hotwater
+		k := &brew.Kettle{}
+		if err = Init(k, configFile.Masher); err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("init kettle failed")
+		}
+		temp, _ := k.Temp.Get() //handle error
+		fmt.Printf("temp=%0.2f state=%t \n", temp, k.Heater.State())
 
 	case "mash start":
 		go func() {
@@ -521,6 +547,18 @@ func main() {
 		}()
 
 		handle = true
+
+	case "cook state":
+		// need a init kettle for hotwater
+		k := &brew.Kettle{}
+		if err = Init(k, configFile.Cooker); err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "cooker",
+				"error":  err,
+			}).Error("init kettle failed")
+		}
+		temp, _ := k.Temp.Get() //handle error
+		fmt.Printf("temp=%0.2f state=%t \n", temp, k.Heater.State())
 
 	case "cook start":
 		go func() {
