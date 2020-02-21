@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 
+	signal "github.com/ripx80/gpio"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
@@ -16,6 +17,13 @@ type Control interface {
 	On() error
 	Off() error
 	State() bool
+}
+
+type transmitOptions struct {
+	PulseLength uint
+	GpioPin     uint
+	Protocol    int
+	BitLength   int
 }
 
 /*
@@ -35,6 +43,13 @@ type SSRDummy struct {
 /*External implements a external programm to control. no args, fix*/
 type External struct {
 	Cmd   string
+	state bool
+}
+
+/*Signal implements control over a gpio pin via 433MHZ signals*/
+type Signal struct {
+	Pin   uint
+	Code  uint64
 	state bool
 }
 
@@ -125,4 +140,33 @@ func (e *External) Off() error {
 /*State returns the current state of external cmd*/
 func (e *External) State() bool {
 	return e.state
+}
+
+/*On send on code over the given gpio pin*/
+func (s *Signal) On() error {
+	t := signal.NewTransmitter(s.Pin)
+	err := t.Transmit(s.Code, signal.DefaultProtocol, 330, signal.DefaultBitLength)
+	if err != nil {
+		return err
+	}
+	t.Wait()
+	s.state = true
+	return nil
+}
+
+/*Off send off code over the given gpio pin (on code - 1 )*/
+func (s *Signal) Off() error {
+	t := signal.NewTransmitter(s.Pin)
+	err := t.Transmit((s.Code - 1), signal.DefaultProtocol, 330, signal.DefaultBitLength)
+	if err != nil {
+		return err
+	}
+	t.Wait()
+	s.state = false
+	return nil
+}
+
+/*State returns the current state of gpio*/
+func (s *Signal) State() bool {
+	return s.state
 }

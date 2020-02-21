@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -94,6 +95,26 @@ func Init(k *brew.Kettle, kettleConfig config.PodConfig) error {
 		if err != nil {
 			return err
 		}
+	case "signal":
+		// check pin
+		// num, err := strconv.Atoi(kettleConfig.Control.Device)
+		// if err != nil {
+		// 	return err
+		// }
+		// pin := gpio.NewInput(uint(num))
+		// _, err = pin.Read()
+		// if err != nil {
+		// 	return err
+		// }
+
+		code, err := strconv.Atoi(kettleConfig.Control.Address)
+		if err != nil {
+			return err
+		}
+
+		// todo, change config to arg pin
+		k.Heater = &brew.Signal{Pin: 17, Code: uint64(code)}
+
 	case "external":
 		_, err = os.Stat(kettleConfig.Control.Address)
 		if err != nil {
@@ -124,6 +145,25 @@ func Init(k *brew.Kettle, kettleConfig config.PodConfig) error {
 		if kettleConfig.Agiator.Address != "" {
 			return fmt.Errorf("failed setup agiator, device not set: %s", kettleConfig.Agiator.Address)
 		}
+	case "signal":
+		// check pin
+		// num, err := strconv.Atoi(kettleConfig.Control.Device)
+		// if err != nil {
+		// 	return err
+		// }
+		// pin := gpio.NewInput(uint(num))
+		// _, err = pin.Read()
+		// if err != nil {
+		// 	return err
+		// }
+
+		code, err := strconv.Atoi(kettleConfig.Control.Address)
+		if err != nil {
+			return err
+		}
+		// todo, change config to arg pin
+		k.Agitator = &brew.Signal{Pin: 17, Code: uint64(code)}
+
 	default:
 		return fmt.Errorf("unsupported agiator device: %s", kettleConfig.Agiator.Device)
 	}

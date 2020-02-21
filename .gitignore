@@ -2,3 +2,4 @@ vendor
 todel
 cmd/m3d/broken
 cmd/m3d/recipes
+bin/
