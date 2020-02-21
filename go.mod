@@ -10,9 +10,9 @@ require (
 	github.com/grokify/html-strip-tags-go v0.0.0-20190921062105-daaa06bf1aaf
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/ripx80/brave v0.0.0-20200129180511-0cec6bf8b645
-	github.com/ripx80/gpio v0.0.0-20200221085238-1226b3a5c440
+	github.com/ripx80/signal v0.0.0-20200221114242-f8c0121af15b
 	github.com/sirupsen/logrus v1.4.2
-	github.com/stretchr/testify v1.5.0
+	github.com/stretchr/testify v1.5.1
 	golang.org/x/net v0.0.0-20190522155817-f3200d17e092 // indirect
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
