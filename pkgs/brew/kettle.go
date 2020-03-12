@@ -69,9 +69,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 	for {
 		select {
 		case <-stop:
-			if k.Heater.State() {
-				k.Heater.Off()
-			}
+			k.Off()
 			return nil
 		case <-time.After(1 * time.Second):
 			if temp, err = k.TempSet(tempTo); err != nil {
@@ -121,9 +119,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 	for {
 		select {
 		case <-stop:
-			if k.Heater.State() {
-				k.Heater.Off()
-			}
+			k.Off()
 			return nil
 
 		case <-ttl:

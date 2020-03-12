@@ -21,7 +21,7 @@ type periphConfigZero struct {
 }
 
 /*
-PodConfig holds Pod Informations
+PodConfig holds Pod Informations, Change Name to KettleConfig
 */
 type PodConfig struct {
 	Control    periphConfig

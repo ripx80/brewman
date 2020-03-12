@@ -17,6 +17,7 @@ import (
 	"github.com/ripx80/brave/work"
 	"github.com/ripx80/brewman/config"
 	"github.com/ripx80/brewman/pkgs/brew"
+	"github.com/ripx80/brewman/pkgs/pod"
 	"github.com/ripx80/brewman/pkgs/recipe"
 	"github.com/sirupsen/logrus"
 
@@ -362,7 +363,6 @@ func main() {
 		}
 		fmt.Print(recipe)
 
-		// do this in a function with return err and log in main
 	case "control off":
 		switch cfg.kettle {
 		case "hotwater":
@@ -533,10 +533,35 @@ func main() {
 		fmt.Printf("temp=%0.2f state=%t \n", temp, k.Heater.State())
 
 	case "hotwater start":
+		var err error
+		k := &brew.Kettle{}
+		if err = Init(k, configFile.Hotwater); err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "hotwater",
+				"error":  err,
+			}).Error("init kettle failed")
+		}
+		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
+		if err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "hotwater",
+				"error":  err,
+			}).Error("read recipe failed")
+		}
+
+		log.WithFields(log.Fields{
+			"recipe":   recipe.Global.Name,
+			"mainCast": recipe.Water.MainCast,
+			"grouting": recipe.Water.Grouting,
+		}).Info("hotwater information")
+
+		Pod := pod.New(k, recipe, stop)
+		Pod.Hotwater(configFile.Global.HotwaterTemperatur) // set defined task with steps
+
 		go func() {
 			defer wg.Done()
 			wg.Add(1)
-			if err := Hotwater(configFile, stop); err != nil {
+			if err := Pod.Run(); err != nil {
 				log.WithFields(log.Fields{
 					"kettle": "hotwater",
 					"error":  err,
@@ -560,10 +585,35 @@ func main() {
 		fmt.Printf("temp=%0.2f state=%t \n", temp, k.Heater.State())
 
 	case "mash start":
+
+		var err error
+		k := &brew.Kettle{}
+		if err = Init(k, configFile.Hotwater); err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("init kettle failed")
+		}
+		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
+		if err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("read recipe failed")
+		}
+
+		log.WithFields(log.Fields{
+			"recipe": recipe.Global.Name,
+		}).Info("mash information:")
+		fmt.Println(recipe.Mash)
+
+		Pod := pod.New(k, recipe, stop)
+		Pod.Mash(configFile.Global.HoldTemperatur) // set defined task with steps
+
 		go func() {
 			defer wg.Done()
 			wg.Add(1)
-			if err := Mash(configFile, stop); err != nil {
+			if err := Pod.Run(); err != nil {
 				log.WithFields(log.Fields{
 					"kettle": "masher",
 					"error":  err,
@@ -574,10 +624,45 @@ func main() {
 		handle = true
 
 	case "mash rast":
+		var err error
+		k := &brew.Kettle{}
+		if err = Init(k, configFile.Hotwater); err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("init kettle failed")
+		}
+		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
+		if err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("read recipe failed")
+		}
+
+		if *(rastNum) > 8 || *(rastNum) <= 0 {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("rast number out of range [1-8]")
+			break
+		}
+
+		if len(recipe.Mash.Rests) < *(rastNum) {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("rast number not in recipe")
+			break
+		}
+
+		Pod := pod.New(k, recipe, stop)
+		Pod.MashRast(*(rastNum) - 1) // set defined task with steps
+
 		go func() {
 			defer wg.Done()
 			wg.Add(1)
-			if err := MashRast(configFile, stop, *(rastNum)); err != nil {
+			if err := Pod.Run(); err != nil {
 				log.WithFields(log.Fields{
 					"kettle": "masher",
 					"error":  err,
@@ -589,7 +674,6 @@ func main() {
 		handle = true
 
 	case "cook state":
-		// need a init kettle for hotwater
 		k := &brew.Kettle{}
 		if err = Init(k, configFile.Cooker); err != nil {
 			log.WithFields(log.Fields{
@@ -601,10 +685,33 @@ func main() {
 		fmt.Printf("temp=%0.2f state=%t \n", temp, k.Heater.State())
 
 	case "cook start":
+		var err error
+		k := &brew.Kettle{}
+		if err = Init(k, configFile.Hotwater); err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "cooker",
+				"error":  err,
+			}).Error("init kettle failed")
+		}
+		recipe, err := recipe.LoadFile(configFile.Recipe.File, &recipe.Recipe{})
+		if err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "cooker",
+				"error":  err,
+			}).Error("read recipe failed")
+		}
+		log.WithFields(log.Fields{
+			"recipe": recipe.Global.Name,
+		}).Info("cook information")
+		log.Info(recipe.Cook) // not a nice output
+
+		Pod := pod.New(k, recipe, stop)
+		Pod.Cook(configFile.Global.CookingTemperatur) // set defined task with steps
+
 		go func() {
 			defer wg.Done()
 			wg.Add(1)
-			if err := Cook(configFile, stop); err != nil {
+			if err := Pod.Run(); err != nil {
 				log.WithFields(log.Fields{
 					"kettle": "cooker",
 					"error":  err,
@@ -619,6 +726,9 @@ func main() {
 	if handle {
 		for {
 			select {
+			//case <-time.After(1 * time.Second):
+
+			//insert here refresh func for app/tview
 			case <-signals:
 			case <-stop:
 			case <-done:
