@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ripx80/brewman/pkgs/brew"
-	"github.com/ripx80/brewman/pkgs/recipe"
+	"github.com/ripx80/recipe"
 )
 
 type Pod struct {

@@ -19,7 +19,7 @@ import (
 	"github.com/ripx80/brewman/config"
 	"github.com/ripx80/brewman/pkgs/brew"
 	"github.com/ripx80/brewman/pkgs/pod"
-	"github.com/ripx80/brewman/pkgs/recipe"
+	"github.com/ripx80/recipe"
 	"github.com/sirupsen/logrus"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"

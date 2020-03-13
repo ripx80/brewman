@@ -27,24 +27,7 @@ all: fmt | $(BIN) ; $(info $(M) building executable…) @ ## Build program binar
 	$(GOARM) $(GO) build \
 		-tags release \
 		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $(BIN)/brewman_arm cmd/brewman/*.go; \
-	$(GO) build \
-		-tags release \
-		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $(BIN)/m3c cmd/m3c/main.go; \
-	$(GOARM) $(GO) build \
-		-tags release \
-		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $(BIN)/m3c_arm cmd/m3c/main.go; \
-	$(GO) build \
-		-tags release \
-		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $(BIN)/m3d cmd/m3d/main.go; \
-	$(GOARM) $(GO) build \
-		-tags release \
-		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $(BIN)/m3d_arm cmd/m3d/main.go
-
+		-o $(BIN)/brewman_arm cmd/brewman/*.go
 # Tools
 
 $(BIN):
