@@ -14,27 +14,21 @@ type Pod struct {
 	recipe *recipe.Recipe
 	task   *Task
 	stop   chan struct{}
-	metric *Metric // set all metrics on task.Run and in Step
 }
 
-type Metric struct {
-	Step,
-	StartTime,
-	Time,
-	HoldTime, //need from step
+type StepMetric struct {
+	Start,
+	End time.Time
+	Hold time.Duration
 	TempStart,
-	Temp,
-	TempEnd, //need from step
-	State,
-	Fail, // need from kettle
-	Recipe string
+	TempEnd float64
 }
 
 /*Step has a name and a call function which will be call by task.Run() in sequence*/
 type Step struct {
-	Name  string
-	F     func() error
-	Start time.Time
+	Name   string
+	F      func() error
+	Metric StepMetric
 }
 
 /*Task holds multiple steps and executes in sequence*/
@@ -42,6 +36,22 @@ type Task struct {
 	Name  string
 	Steps []*Step
 	step  *Step //actual step working on
+}
+
+type PodMetric struct {
+	Pod,
+	StepName,
+	Recipe string
+	Step *StepMetric
+}
+
+func (p *Pod) Metric() *PodMetric {
+	return &PodMetric{
+		Pod:      p.name,
+		StepName: p.task.step.Name,
+		Recipe:   p.recipe.Global.Name,
+		Step:     &p.task.step.Metric,
+	}
 }
 
 func New(kettle *brew.Kettle, recipe *recipe.Recipe, stop chan struct{}) *Pod {
@@ -55,11 +65,13 @@ func New(kettle *brew.Kettle, recipe *recipe.Recipe, stop chan struct{}) *Pod {
 /*Run loop over the steps and check return values*/
 func (p *Pod) Run() error {
 	for _, s := range p.task.Steps {
+		s.Metric.Start = time.Now()
+		s.Metric.TempStart, _ = p.kettle.Temp.Get() // no buffer for first set
 		p.task.step = s
-		s.Start = time.Now()
 		if err := s.F(); err != nil {
 			return err
 		}
+		s.Metric.End = time.Now()
 	}
 	return nil
 }
@@ -110,7 +122,11 @@ func (p *Pod) StepTempUp(name string, temp float64) *Step {
 		Name: name,
 		F: func() error {
 			return p.kettle.TempUp(p.stop, temp)
-		}}
+		},
+		Metric: StepMetric{
+			TempEnd: temp,
+		},
+	}
 }
 
 /*StepTempHold hold the temp as task step*/
@@ -119,6 +135,10 @@ func (p *Pod) StepTempHold(name string, temp float64, time time.Duration) *Step 
 		Name: name,
 		F: func() error {
 			return p.kettle.TempHold(p.stop, temp, time)
+		},
+		Metric: StepMetric{
+			TempEnd: temp,
+			Hold:    time,
 		}}
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -668,6 +669,9 @@ func main() {
 					"error":  err,
 				}).Error("kettle func failed")
 			}
+			out, _ := json.Marshal(Pod.Metric())
+			log.Info(string(out))
+
 			done <- struct{}{}
 		}()
 

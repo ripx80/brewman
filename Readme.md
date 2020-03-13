@@ -50,20 +50,25 @@ describe comming soon
 - [x] correct os.Exit codes
 - [x] add data channel to lib(not abroved)
 - [x] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
+- [x] add 433mh control unit
+- [ ] improve cmd parsing, change to cobra (check structure)
+
+0.3
+
+- [ ] use interactive mode - use a fancy terminal to show temps (tview)
+- [ ] switch between pods and set recipe in tview
+- [ ] list rests and start mash rest tview
+
+0.4
+
 - [ ] recipies: calculate other water/size informations
 - [ ] add more debug informations
 - [ ] add all test files, use testify and testify/mocking
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
-- [ ] improve cmd parsing, change to cobra (check structure)
-- [ ] add 433mh control unit with make file (external program)
-
-0.3
-
 - [ ] Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
 - [ ] Metric Exporter: Prometheus, NodeExporter and internal
-- [ ] use interactive mode - use a fancy terminal to show temps
 
-0.4
+0.5
 
 - [ ] Webinterface with Vue.js
 - [ ] grab Status from api

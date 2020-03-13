@@ -7,6 +7,8 @@ import (
 	log "github.com/ripx80/brave/log/logger"
 )
 
+// todo: remove log from here, only temp fail will log. but we can do this with metrics outside
+
 /*
 Kettle is the pod unit with Temp, Heater and Agitator
 */
@@ -14,6 +16,22 @@ type Kettle struct {
 	Temp     TempSensor
 	Heater   Control
 	Agitator Control
+	metric   KettleMetric
+}
+
+/*KettleMetric for access internal Metrics from outside*/
+type KettleMetric struct {
+	Temp     float64
+	Heater   bool
+	Agitator bool
+	Fail     int
+}
+
+/*Metric returns current Metrics from Kettle*/
+func (k *Kettle) Metric() *KettleMetric {
+	k.metric.Heater = k.Heater.State()
+	k.metric.Agitator = k.Agitator.State()
+	return &k.metric
 }
 
 /*
@@ -83,6 +101,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 			if failcnt >= 6 {
 				log.Error("Temperature not increased but the heater is on. Check your hardware setup")
 				failcnt = 0
+				k.metric.Fail++
 			}
 
 			if temp >= tempTo {
@@ -91,6 +110,8 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 				}
 				return nil
 			}
+			// set metrics
+
 			// use zstate and not state because logrus log in alphabetical order. workaround sry
 			log.WithFields(log.Fields{
 				"temperatur":  fmt.Sprintf("%0.2f", temp),
@@ -112,6 +133,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 		failcnt uint8
 		err     error
 	)
+
 	ttl := make(<-chan time.Time, 1) // placeholder for timer, 0 run forever
 	if timeout > 0 {
 		ttl = time.After(timeout)
@@ -137,6 +159,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 
 			if failcnt >= 3 {
 				log.Error("temperature not holding but the heater is on. check your hardware setup")
+				k.metric.Fail++
 				failcnt = 0
 			}
 
@@ -165,5 +188,7 @@ func (k *Kettle) TempSet(temp float64) (current float64, err error) {
 		log.Debug("Heater Off")
 		k.Heater.Off()
 	}
+	// bufferr, temp sensors sometimes slow
+	k.metric.Temp = current
 	return
 }
