@@ -1,4 +1,5 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
+github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PuerkitoBio/goquery v1.5.0 h1:uGvmFXOA73IKluu/F84Xd1tt/z07GYm8X49XKHP7EJk=
@@ -95,6 +96,7 @@ github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084/go.mod h1:TjEm7z
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
 github.com/ripx80/brave v0.0.0-20200129180511-0cec6bf8b645 h1:k1sLVWJlMsrnxgl5F3ggg/hDVIQctQp1l2CXHRPKUlc=
 github.com/ripx80/brave v0.0.0-20200129180511-0cec6bf8b645/go.mod h1:h8oz1oB7UUh+KO3zWSk5AfSP3wxwh0xXkSNlc8k9zdE=
+github.com/ripx80/brave v0.0.0-20200219134052-ec990c32a017 h1:uhqHRS4gBE00eOFZ4rbQ+tZ1P/9pOkQrOHRxWt4sYiw=
 github.com/ripx80/brewman v0.0.0-20200221114444-452270045bc8/go.mod h1:I7eYh4U5Bcae9ci57ytRs7RvSWoFu30qDTpYrbglJNw=
 github.com/ripx80/recipe v0.0.0-20200313134053-4af658dd9509 h1:bbDRmXo7MdA5z8q6wl248DeImEmdGVokAgqcehCqQOI=
 github.com/ripx80/recipe v0.0.0-20200313134053-4af658dd9509/go.mod h1:x+tRZvOY/3Kk/ffuzTgbQqsIS908nB3T1OqmjRxQtRw=

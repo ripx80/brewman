@@ -3,9 +3,7 @@ module github.com/ripx80/brewman
 go 1.13
 
 require (
-	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/ghodss/yaml v1.0.0
-	github.com/grokify/html-strip-tags-go v0.0.0-20190921062105-daaa06bf1aaf
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ripx80/brave v0.0.0-20200129180511-0cec6bf8b645
 	github.com/ripx80/recipe v0.0.0-20200313134053-4af658dd9509

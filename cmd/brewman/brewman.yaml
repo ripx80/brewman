@@ -3,23 +3,23 @@ Cooker:
     Address: ""
     Device: ""
   Control:
-    Address: "30"
-    Device: dummy
+    Address: "70933"
+    Device: signal
   Temperatur:
     Address: /sys/bus/w1/devices/28-0316c2d550ff/w1_slave
     Device: dummy
 Global:
   CookingTemperatur: 97.5
+  HoldTemperatur: 5
   HotwaterTemperatur: 76
   TemperaturUnit: Celsius
-  HoldTemperatur: 1
 Hotwater:
   Agiator:
     Address: ""
     Device: ""
   Control:
-    Address: "3"
-    Device: dummy
+    Address: "5397"
+    Device: signal
   Temperatur:
     Address: /sys/bus/w1/devices/28-0416c5040bff/w1_slave
     Device: dummy
@@ -28,8 +28,8 @@ Masher:
     Address: "27"
     Device: dummy
   Control:
-    Address: "17"
-    Device: dummy
+    Address: "4373"
+    Device: signal
   Temperatur:
     Address: /sys/bus/w1/devices/28-0416c4dec6ff/w1_slave
     Device: dummy

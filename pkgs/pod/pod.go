@@ -9,8 +9,8 @@ import (
 )
 
 type Pod struct {
+	Kettle *brew.Kettle
 	name   string // set from config name {Hotwater}
-	kettle *brew.Kettle
 	recipe *recipe.Recipe
 	task   *Task
 	stop   chan struct{}
@@ -42,7 +42,8 @@ type PodMetric struct {
 	Pod,
 	StepName,
 	Recipe string
-	Step *StepMetric
+	Step   *StepMetric
+	Kettle *brew.KettleMetric
 }
 
 func (p *Pod) Metric() *PodMetric {
@@ -51,12 +52,13 @@ func (p *Pod) Metric() *PodMetric {
 		StepName: p.task.step.Name,
 		Recipe:   p.recipe.Global.Name,
 		Step:     &p.task.step.Metric,
+		Kettle:   p.Kettle.Metric(),
 	}
 }
 
 func New(kettle *brew.Kettle, recipe *recipe.Recipe, stop chan struct{}) *Pod {
 	return &Pod{
-		kettle: kettle,
+		Kettle: kettle,
 		recipe: recipe,
 		stop:   stop,
 	}
@@ -66,7 +68,7 @@ func New(kettle *brew.Kettle, recipe *recipe.Recipe, stop chan struct{}) *Pod {
 func (p *Pod) Run() error {
 	for _, s := range p.task.Steps {
 		s.Metric.Start = time.Now()
-		s.Metric.TempStart, _ = p.kettle.Temp.Get() // no buffer for first set
+		s.Metric.TempStart, _ = p.Kettle.Temp.Get() // no buffer for first set
 		p.task.step = s
 		if err := s.F(); err != nil {
 			return err
@@ -97,8 +99,8 @@ func (p *Pod) StepAgitatorOn() *Step {
 	return &Step{
 		Name: "AgiatorOn",
 		F: func() error {
-			if p.kettle.Agitator != nil && !p.kettle.Agitator.State() {
-				p.kettle.Agitator.On()
+			if p.Kettle.Agitator != nil && !p.Kettle.Agitator.State() {
+				p.Kettle.Agitator.On()
 			}
 			return nil
 		}}
@@ -109,8 +111,8 @@ func (p *Pod) StepAgitatorOff() *Step {
 	return &Step{
 		Name: "AgiatorOff",
 		F: func() error {
-			if p.kettle.Agitator != nil && p.kettle.Agitator.State() {
-				p.kettle.Agitator.Off()
+			if p.Kettle.Agitator != nil && p.Kettle.Agitator.State() {
+				p.Kettle.Agitator.Off()
 			}
 			return nil
 		}}
@@ -121,7 +123,7 @@ func (p *Pod) StepTempUp(name string, temp float64) *Step {
 	return &Step{
 		Name: name,
 		F: func() error {
-			return p.kettle.TempUp(p.stop, temp)
+			return p.Kettle.TempUp(p.stop, temp)
 		},
 		Metric: StepMetric{
 			TempEnd: temp,
@@ -134,7 +136,7 @@ func (p *Pod) StepTempHold(name string, temp float64, time time.Duration) *Step 
 	return &Step{
 		Name: name,
 		F: func() error {
-			return p.kettle.TempHold(p.stop, temp, time)
+			return p.Kettle.TempHold(p.stop, temp, time)
 		},
 		Metric: StepMetric{
 			TempEnd: temp,
@@ -208,6 +210,16 @@ func (p *Pod) Cook(temp float64) {
 		Steps: []*Step{
 			p.StepTempUp("TempUp", temp),
 			p.StepTempHold("TempHold", temp, time.Duration(p.recipe.Cook.Time*60)*time.Second),
+		},
+	}
+}
+
+/*Validate Task template*/
+func (p *Pod) Validate(temp float64) {
+	p.task = &Task{
+		Name: "Validate",
+		Steps: []*Step{
+			p.StepTempUp("TempUp", temp+1),
 		},
 	}
 }

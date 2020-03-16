@@ -1,23 +1,11 @@
-/*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
+	"github.com/ripx80/brave/exit"
+	log "github.com/ripx80/brave/log/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -36,16 +24,54 @@ to quickly create a Cobra application.`,
 	},
 }
 
+var setConfig = &cobra.Command{
+	Use:   "config",
+	Short: "set config",
+	Long:  `get gives you multiple informations in your prefered output format `,
+	//	PreRun: func(cmd *cobra.Command, args []string) {},
+	Run: func(cmd *cobra.Command, args []string) {
+		cfg.conf.Save(cfg.file)
+	},
+}
+
+var setRecipe = &cobra.Command{
+	Use:   "recipe",
+	Short: "set recipe",
+	Long:  `get gives you multiple informations in your prefered output format `,
+	// PersistentPreRun
+	//	PreRun: func(cmd *cobra.Command, args []string) {},
+	Args: cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		var err error
+		cfg.conf.Recipe.File, err = filepath.Abs(args[0])
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":  err,
+				"recipe": cfg.conf.Recipe.File,
+				"config": cfg.file,
+			}).Error("can not get recipe file")
+			exit.Exit(1)
+		}
+		// todo parsing recipe and check content
+		if err = cfg.conf.Save(cfg.file); err != nil {
+			log.WithFields(log.Fields{
+				"error":      err,
+				"configFile": cfg.file,
+			}).Error("set recipe in configuration")
+			exit.Exit(1)
+		}
+	},
+}
+
+var (
+	filename string
+)
+
 func init() {
-	rootCmd.AddCommand(setCmd)
+	setCmd.AddCommand(setConfig)
+	setCmd.AddCommand(setRecipe)
+	//setRecipe.Flags().StringVarP(&filename, "filename", "s", "", "Source directory to read from")
+	// setRecipe.Flags().StringP("host", "s", "", "export host connect to")
+	// viper.BindPFlag("end", blockCmd.Flags().Lookup("end"))
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// setCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// setCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

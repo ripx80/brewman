@@ -1,51 +1,147 @@
-/*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
 	"fmt"
 
+	log "github.com/ripx80/brave/log/logger"
 	"github.com/spf13/cobra"
 )
 
 // controlCmd represents the control command
 var controlCmd = &cobra.Command{
 	Use:   "control",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "hardware control",
+	Long:  `turn on or off pods and validate hardware`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("control called")
 	},
 }
 
+var offCmd = &cobra.Command{
+	Use:   "off",
+	Short: "turn off pods",
+	Run: func(cmd *cobra.Command, args []string) {
+		log.WithFields(log.Fields{
+			"kettle": "hotwater",
+		}).Debug("control all off")
+		cfg.pods.hotwater.Kettle.Off()
+		cfg.pods.cooker.Kettle.Off()
+		cfg.pods.masher.Kettle.Off()
+	},
+}
+
+var offHotwater = &cobra.Command{
+	Use:   "hotwater",
+	Short: "turn off hotwater pod",
+	Run: func(cmd *cobra.Command, args []string) {
+		log.WithFields(log.Fields{
+			"kettle": "hotwater",
+		}).Debug("control off")
+		cfg.pods.hotwater.Kettle.Off()
+	},
+}
+
+var offCooker = &cobra.Command{
+	Use:   "cooker",
+	Short: "turn off cooker pod",
+	Run: func(cmd *cobra.Command, args []string) {
+		log.WithFields(log.Fields{
+			"kettle": "cooker",
+		}).Debug("control off")
+		cfg.pods.cooker.Kettle.Off()
+	},
+}
+
+var offMasher = &cobra.Command{
+	Use:   "masher",
+	Short: "turn off masher pod",
+	Run: func(cmd *cobra.Command, args []string) {
+		log.WithFields(log.Fields{
+			"kettle": "masher",
+		}).Debug("control off")
+		cfg.pods.masher.Kettle.Off()
+	},
+}
+
+var onCmd = &cobra.Command{
+	Use:   "on",
+	Short: "turn on pods",
+	Run: func(cmd *cobra.Command, args []string) {
+		log.WithFields(log.Fields{
+			"kettle": "hotwater",
+		}).Debug("control all on")
+		cfg.pods.hotwater.Kettle.On()
+		cfg.pods.cooker.Kettle.On()
+		cfg.pods.masher.Kettle.On()
+	},
+}
+
+var onHotwater = &cobra.Command{
+	Use:   "hotwater",
+	Short: "turn on hotwater pod",
+	Run: func(cmd *cobra.Command, args []string) {
+		log.WithFields(log.Fields{
+			"kettle": "hotwater",
+		}).Debug("control on")
+		cfg.pods.hotwater.Kettle.On()
+	},
+}
+
+var onMasher = &cobra.Command{
+	Use:   "masher",
+	Short: "turn on masher pod",
+	Run: func(cmd *cobra.Command, args []string) {
+		log.WithFields(log.Fields{
+			"kettle": "masher",
+		}).Debug("control on")
+		cfg.pods.masher.Kettle.On()
+	},
+}
+
+var onCooker = &cobra.Command{
+	Use:   "cooker",
+	Short: "turn on cooker kettle",
+	Run: func(cmd *cobra.Command, args []string) {
+		log.WithFields(log.Fields{
+			"kettle": "cooker",
+		}).Debug("control on")
+		cfg.pods.cooker.Kettle.On()
+	},
+}
+
+var validateCmd = &cobra.Command{
+	Use:       "validate",
+	Short:     "validate contorl units with a test programm",
+	Args:      cobra.OnlyValidArgs,
+	ValidArgs: []string{"hotwater", "cook", "mash"},
+	Run: func(cmd *cobra.Command, args []string) {
+		cfg.pods.hotwater.Validate(cfg.pods.hotwater.Kettle.Metric().Temp)
+		cfg.pods.masher.Validate(cfg.pods.masher.Kettle.Metric().Temp)
+		cfg.pods.cooker.Validate(cfg.pods.cooker.Kettle.Metric().Temp)
+		// can be run all together in the future
+		log.WithFields(log.Fields{
+			"kettle": "hotwater",
+		}).Debug("validate")
+		cfg.pods.hotwater.Run()
+		log.WithFields(log.Fields{
+			"kettle": "masher",
+		}).Debug("validate")
+		cfg.pods.masher.Run()
+		log.WithFields(log.Fields{
+			"kettle": "cooker",
+		}).Debug("validate")
+		cfg.pods.cooker.Run()
+	},
+}
+
 func init() {
-	rootCmd.AddCommand(controlCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// controlCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// controlCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	controlCmd.AddCommand(offCmd)
+	offCmd.AddCommand(offHotwater)
+	offCmd.AddCommand(offMasher)
+	offCmd.AddCommand(offCooker)
+	controlCmd.AddCommand(onCmd)
+	onCmd.AddCommand(onHotwater)
+	onCmd.AddCommand(onMasher)
+	onCmd.AddCommand(onCooker)
+	controlCmd.AddCommand(validateCmd)
 }
