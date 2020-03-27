@@ -8,9 +8,12 @@ import (
 	"github.com/ripx80/recipe"
 )
 
+/*
+Todo: Remove idleStep and think about *step in task
+*/
+
 type Pod struct {
 	Kettle *brew.Kettle
-	name   string // set from config name {Hotwater}
 	recipe *recipe.Recipe
 	task   *Task
 	stop   chan struct{}
@@ -39,19 +42,28 @@ type Task struct {
 }
 
 type PodMetric struct {
-	Pod,
 	StepName,
 	Recipe string
-	Step   *StepMetric
-	Kettle *brew.KettleMetric
+	Step   StepMetric
+	Kettle brew.KettleMetric
+}
+
+// func (pm *PodMetric) String() string{
+// 	return fmt.Sprintf(
+
+// 	)
+// }
+
+var idleStep = &Step{
+	Name: "idle",
+	F:    func() error { return nil },
 }
 
 func (p *Pod) Metric() *PodMetric {
 	return &PodMetric{
-		Pod:      p.name,
 		StepName: p.task.step.Name,
 		Recipe:   p.recipe.Global.Name,
-		Step:     &p.task.step.Metric,
+		Step:     p.task.step.Metric,
 		Kettle:   p.Kettle.Metric(),
 	}
 }
@@ -61,6 +73,10 @@ func New(kettle *brew.Kettle, recipe *recipe.Recipe, stop chan struct{}) *Pod {
 		Kettle: kettle,
 		recipe: recipe,
 		stop:   stop,
+		task: &Task{
+			Name: "Empty",
+			step: idleStep,
+		},
 	}
 }
 
@@ -164,6 +180,7 @@ func (p *Pod) Hotwater(temp float64) {
 			p.StepTempHold("TempHold", temp, 0),
 		},
 	}
+	p.task.step = p.task.Steps[0]
 }
 
 /*Mash Task template*/
@@ -176,7 +193,6 @@ func (p *Pod) Mash(extendRest int) {
 			//p.Confirm(), Malt added
 		},
 	}
-
 	for num, rast := range p.recipe.Mash.Rests {
 		task.Steps = append(
 			task.Steps,
@@ -186,6 +202,7 @@ func (p *Pod) Mash(extendRest int) {
 	}
 
 	p.task = task
+	p.task.step = p.task.Steps[0]
 	//p.Confirm(), jod and if not correct append a new ExtendRest
 
 }
@@ -201,6 +218,7 @@ func (p *Pod) MashRast(num int) {
 			p.StepTempHold(fmt.Sprintf("Rest %d TemHold", num), rast.Temperatur, time.Duration(rast.Time*60)*time.Second),
 		},
 	}
+	p.task.step = p.task.Steps[0]
 }
 
 /*Cook implements cooking programm*/
@@ -212,6 +230,7 @@ func (p *Pod) Cook(temp float64) {
 			p.StepTempHold("TempHold", temp, time.Duration(p.recipe.Cook.Time*60)*time.Second),
 		},
 	}
+	p.task.step = p.task.Steps[0]
 }
 
 /*Validate Task template*/
@@ -222,4 +241,5 @@ func (p *Pod) Validate(temp float64) {
 			p.StepTempUp("TempUp", temp+1),
 		},
 	}
+	p.task.step = p.task.Steps[0]
 }

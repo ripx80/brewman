@@ -21,7 +21,7 @@ var getCmd = &cobra.Command{
 var getConfig = &cobra.Command{
 	Use:   "config",
 	Short: "get config",
-	Long:  `get gives you multiple informations in your prefered output format `,
+	Long:  `outputs the current config`,
 	//	PreRun: func(cmd *cobra.Command, args []string) {},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Print(cfg.conf)
@@ -32,7 +32,7 @@ var getConfig = &cobra.Command{
 var getRecipe = &cobra.Command{
 	Use:   "recipe",
 	Short: "get recipe",
-	Long:  `get gives you multiple informations in your prefered output format `,
+	Long:  `output the current recipe`,
 	//	PreRun: func(cmd *cobra.Command, args []string) {},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Print(cfg.recipe)

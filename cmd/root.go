@@ -6,10 +6,12 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/ripx80/brave/exit"
 	log "github.com/ripx80/brave/log/logger"
 	logrusBrave "github.com/ripx80/brave/log/logrus"
+	"github.com/ripx80/brave/work"
 	"github.com/ripx80/brewman/config"
 	"github.com/ripx80/brewman/pkgs/pod"
 	"github.com/ripx80/recipe"
@@ -21,7 +23,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "brewman",
 	Version: "0.2",
-	Short:   "A command-line brew application with a beer in my hand",
+	Short:   "A command-line brew application with a beer in your hand",
 	Long: `When you brew your own beer the time is comming to do it with some more cyberpunk stuff.
 brewman controls multiple pods with different types of recipes and tasks.
 	`,
@@ -63,15 +65,16 @@ type Pods struct {
 }
 
 func init() {
-	cobra.OnInitialize(initLogger, initConfig, initRecipe, initPods, initChan)
+	cobra.OnInitialize(initLogger, initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfg.file, "config", "", "config file (default is $HOME/.brewman.yaml)")
 	rootCmd.PersistentFlags().StringVar(&cfg.format, "format", "text", "output format: json,text")
 	rootCmd.PersistentFlags().BoolVarP(&cfg.debug, "debug", "d", false, "debug messages")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.AddCommand(getCmd)
 	rootCmd.AddCommand(setCmd)
-	rootCmd.AddCommand(mashCmd)
 	rootCmd.AddCommand(hotwaterCmd)
+	rootCmd.AddCommand(mashCmd)
+	rootCmd.AddCommand(cookCmd)
 	rootCmd.AddCommand(controlCmd)
 }
 
@@ -168,5 +171,20 @@ func initConfig() {
 	if err := validator.Validate(cfg.conf); err != nil {
 		fmt.Printf("config file validation failed: %s\n", err)
 		exit.Exit(1)
+	}
+}
+
+func handle() {
+	for {
+		select {
+		//case <-time.After(1 * time.Second):
+		//insert here refresh func for app/tview
+		case <-cfg.signals:
+		case <-cfg.stop:
+		case <-cfg.done:
+		}
+		close(cfg.stop)
+		work.WaitTimeout(cfg.wg, 1*time.Second) // wait for all workers with timeout
+		exit.Exit(0)                            // check the return
 	}
 }

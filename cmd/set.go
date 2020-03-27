@@ -12,13 +12,7 @@ import (
 // setCmd represents the set command
 var setCmd = &cobra.Command{
 	Use:   "set",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "set recipe or config",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("set called")
 	},
@@ -27,7 +21,7 @@ to quickly create a Cobra application.`,
 var setConfig = &cobra.Command{
 	Use:   "config",
 	Short: "set config",
-	Long:  `get gives you multiple informations in your prefered output format `,
+	Long:  `save the current config to file`,
 	//	PreRun: func(cmd *cobra.Command, args []string) {},
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg.conf.Save(cfg.file)
@@ -37,7 +31,7 @@ var setConfig = &cobra.Command{
 var setRecipe = &cobra.Command{
 	Use:   "recipe",
 	Short: "set recipe",
-	Long:  `get gives you multiple informations in your prefered output format `,
+	Long:  `set the given recipe in config`,
 	// PersistentPreRun
 	//	PreRun: func(cmd *cobra.Command, args []string) {},
 	Args: cobra.MinimumNArgs(1),
@@ -73,5 +67,4 @@ func init() {
 	//setRecipe.Flags().StringVarP(&filename, "filename", "s", "", "Source directory to read from")
 	// setRecipe.Flags().StringP("host", "s", "", "export host connect to")
 	// viper.BindPFlag("end", blockCmd.Flags().Lookup("end"))
-
 }

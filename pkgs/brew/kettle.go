@@ -28,10 +28,14 @@ type KettleMetric struct {
 }
 
 /*Metric returns current Metrics from Kettle*/
-func (k *Kettle) Metric() *KettleMetric {
+func (k *Kettle) Metric() KettleMetric {
+	// workaround if temp is not init, when no step is currently running
+	if k.metric.Temp == 0 {
+		k.metric.Temp, _ = k.Temp.Get()
+	}
 	k.metric.Heater = k.Heater.State()
 	k.metric.Agitator = k.Agitator.State()
-	return &k.metric
+	return k.metric
 }
 
 /*

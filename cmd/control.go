@@ -12,8 +12,13 @@ var controlCmd = &cobra.Command{
 	Use:   "control",
 	Short: "hardware control",
 	Long:  `turn on or off pods and validate hardware`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		initRecipe()
+		initPods()
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("control called")
+		//return status metric
 	},
 }
 
