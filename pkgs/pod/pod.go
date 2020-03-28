@@ -163,13 +163,13 @@ func (p *Pod) StepTempHold(name string, temp float64, time time.Duration) *Step 
 //need a good way for a confirmation with channels
 
 /*StepConfirm hold the temp as task step*/
-// func (p *Pod) Confirm() *Step {
-// 	return &Step{
-// 		Name: "TempHold",
-// 		F: func() error {
-// 			return confirm("start mashing? <y/n>")
-// 		}}
-// }
+func (p *Pod) Confirm(msg string) *Step {
+	return &Step{
+		Name: "Confirm",
+		F: func() error {
+			return confirm(msg)
+		}}
+}
 
 /*Hotwater Task template*/
 func (p *Pod) Hotwater(temp float64) {

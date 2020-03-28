@@ -41,7 +41,6 @@ var mashMetric = &cobra.Command{
 	Use:   "metric",
 	Short: "get mash pod metric",
 	Long:  `get metrics of mash mod`,
-	//	PreRun: func(cmd *cobra.Command, args []string) {},
 	Run: func(cmd *cobra.Command, args []string) {
 		out, err := json.Marshal(cfg.pods.masher.Metric())
 		if err != nil {
@@ -57,9 +56,7 @@ var mashRest = &cobra.Command{
 	Short: "mash the given rest",
 	Long:  `mash the given rest. after finishing stop mashing`,
 	Args:  cobra.MinimumNArgs(1),
-	//	PreRun: func(cmd *cobra.Command, args []string) {},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("mash metric called %s\n", args[0])
 		rastNum, err := strconv.Atoi(args[0])
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -100,7 +97,6 @@ var mashRest = &cobra.Command{
 	},
 }
 
-// add continue flag on rest
 func init() {
 	mashCmd.AddCommand(mashMetric)
 	mashCmd.AddCommand(mashRest)

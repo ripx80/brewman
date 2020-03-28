@@ -51,13 +51,17 @@ describe comming soon
 - [x] add data channel to lib(not abroved)
 - [x] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
 - [x] add 433mh control unit
-- [ ] improve cmd parsing, change to cobra (check structure)
+- [x] improve cmd parsing, change to cobra (check structure)
+- [x] removed confirmations
 
 0.3
 
 - [ ] use interactive mode - use a fancy terminal to show temps (tview)
 - [ ] switch between pods and set recipe in tview
 - [ ] list rests and start mash rest tview
+- [ ] add continue flag on rest
+- [ ] add confirm in tview for the last rest in mesh
+- [ ] improve code quality and simplicity
 
 0.4
 
