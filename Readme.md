@@ -60,7 +60,7 @@ describe comming soon
 - [ ] switch between pods and set recipe in tview
 - [ ] list rests and start mash rest tview
 - [ ] add continue flag on rest
-- [ ] add confirm in tview for the last rest in mesh
+- [ ] add confirm in tview from channel
 - [ ] improve code quality and simplicity
 
 0.4

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -27,13 +28,31 @@ var rootCmd = &cobra.Command{
 	Long: `When you brew your own beer the time is comming to do it with some more cyberpunk stuff.
 brewman controls multiple pods with different types of recipes and tasks.
 	`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		initRecipe()
+		initPods()
+		initChan()
+		//init pods with tasks
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Root().Help()
+		cfg.ui = true
+		go func() {
+			defer cfg.wg.Done()
+			cfg.wg.Add(1)
+			if err := view(); err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Error("view run func failed")
+			}
+			cfg.done <- struct{}{}
+		}()
+		handle()
 	},
 }
 
 var cfg cfgCmd
 
+/*Execute the rootCmd*/
 func Execute() {
 	defer exit.Safe()
 	if err := rootCmd.Execute(); err != nil {
@@ -49,16 +68,20 @@ type cfgCmd struct {
 	recipeFile string //not used
 	recipe     *recipe.Recipe
 
-	pods Pods
+	pods podsup
 	conf *config.Config
 
 	wg *sync.WaitGroup
 	stop,
 	done chan struct{}
-	signals chan os.Signal
+	signals     chan os.Signal
+	confirm     chan pod.Quest
+	confirmFunc func() error
+
+	ui bool
 }
 
-type Pods struct {
+type podsup struct {
 	hotwater *pod.Pod
 	cooker   *pod.Pod
 	masher   *pod.Pod
@@ -85,6 +108,48 @@ func initChan() {
 	cfg.done = make(chan struct{})
 	signal.Notify(cfg.signals, syscall.SIGINT, syscall.SIGTERM)
 	cfg.wg = new(sync.WaitGroup)
+}
+
+func confirmConsole() error {
+	var quest pod.Quest
+	opt := "use y/n"
+	for {
+		select {
+		case <-cfg.stop:
+			return nil
+		case quest = <-cfg.confirm:
+			var response string
+			fmt.Printf("%s (Y/n)", quest.Msg)
+			l, err := fmt.Scan(&response)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Error("canot read response")
+			}
+			if l > 3 {
+				log.Info(opt) // was a warning
+				continue
+			}
+			response = strings.ToLower(response)
+			switch response {
+			case "n":
+				cfg.confirm <- pod.Quest{"n", false}
+			default:
+				cfg.confirm <- pod.Quest{"y", true}
+			}
+
+		}
+	}
+}
+
+func initConfirm() {
+	cfg.confirm = make(chan pod.Quest)
+	if cfg.ui {
+		cfg.confirmFunc = confirmUI
+	} else {
+		cfg.confirmFunc = confirmConsole
+	}
+
 }
 
 func initLogger() {
@@ -177,8 +242,6 @@ func initConfig() {
 func handle() {
 	for {
 		select {
-		//case <-time.After(1 * time.Second):
-		//insert here refresh func for app/tview
 		case <-cfg.signals:
 		case <-cfg.stop:
 		case <-cfg.done:

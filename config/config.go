@@ -49,7 +49,7 @@ type GlobalConfig struct {
 	TemperaturUnit     string  `yaml:"temperatur-unit" validate:"regexp=[Cc]elsius|[Kk]elvin"`
 	HotwaterTemperatur float64 `yaml:"hotwater-temperatur" validate:"min=70,max=90"`
 	CookingTemperatur  float64 `yaml:"cooking-temperatur" validate:"min=90,max=110"`
-	HoldTemperatur     int     `yaml:"hold-temperatur" validate:"min=5,max=25"`
+	HoldTemperatur     int     `yaml:"hold-temperatur" validate:"min=1,max=25"`
 }
 
 /*

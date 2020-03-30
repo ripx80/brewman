@@ -10,7 +10,7 @@ Cooker:
     Device: dummy
 Global:
   CookingTemperatur: 97.5
-  HoldTemperatur: 5
+  HoldTemperatur: 1
   HotwaterTemperatur: 76
   TemperaturUnit: Celsius
 Hotwater:

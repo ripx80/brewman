@@ -116,7 +116,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 			}
 			// set metrics
 
-			// use zstate and not state because logrus log in alphabetical order. workaround sry
+			//use zstate and not state because logrus log in alphabetical order. workaround sry
 			log.WithFields(log.Fields{
 				"temperatur":  fmt.Sprintf("%0.2f", temp),
 				"destination": tempTo,

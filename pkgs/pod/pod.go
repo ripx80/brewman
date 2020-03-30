@@ -39,6 +39,7 @@ type Task struct {
 	Name  string
 	Steps []*Step
 	step  *Step //actual step working on
+	num   int   // if i know the num i dont need the step pointer
 }
 
 type PodMetric struct {
@@ -82,7 +83,11 @@ func New(kettle *brew.Kettle, recipe *recipe.Recipe, stop chan struct{}) *Pod {
 
 /*Run loop over the steps and check return values*/
 func (p *Pod) Run() error {
-	for _, s := range p.task.Steps {
+	var s *Step
+	// num of steps can change, dont use range
+	for i := 0; i < len(p.task.Steps); i++ {
+		p.task.num = i
+		s = p.task.Steps[i]
 		s.Metric.Start = time.Now()
 		s.Metric.TempStart, _ = p.Kettle.Temp.Get() // no buffer for first set
 		p.task.step = s
@@ -122,7 +127,7 @@ func (p *Pod) StepAgitatorOn() *Step {
 		}}
 }
 
-/*StepAgitatorOn tuns the Agiator on if defined in config*/
+/*StepAgitatorOff tuns the Agiator on if defined in config*/
 func (p *Pod) StepAgitatorOff() *Step {
 	return &Step{
 		Name: "AgiatorOff",
@@ -160,15 +165,49 @@ func (p *Pod) StepTempHold(name string, temp float64, time time.Duration) *Step 
 		}}
 }
 
-//need a good way for a confirmation with channels
+//Quest stimple struct with question and answer
+type Quest struct {
+	Msg string
+	Asw bool
+}
 
 /*StepConfirm hold the temp as task step*/
-func (p *Pod) Confirm(msg string) *Step {
+func (p *Pod) StepConfirm(msg string, confirm chan Quest) *Step {
 	return &Step{
 		Name: "Confirm",
 		F: func() error {
-			return confirm(msg)
-		}}
+			confirm <- Quest{Msg: msg, Asw: false}
+			quest := <-confirm
+			if !quest.Asw {
+				p.task.Steps = append(p.task.Steps, nil /* use the zero value of the element type */)
+				copy(p.task.Steps[p.task.num+1:], p.task.Steps[p.task.num:])
+				p.task.Steps[p.task.num] = p.StepConfirm(msg, confirm)
+			}
+			return nil
+		},
+	}
+}
+
+/*StepConfirmRest hold the temp as task step*/
+func (p *Pod) StepConfirmRest(msg string, confirm chan Quest, extendRest int, temp float64) *Step {
+	return &Step{
+		Name: "ConfirmRest",
+		F: func() error {
+			confirm <- Quest{Msg: msg, Asw: false}
+			quest := <-confirm
+			fmt.Println(quest)
+			if !quest.Asw {
+				p.task.Steps = append(p.task.Steps[:p.task.num+1],
+					append(
+						[]*Step{
+							p.StepTempHold("TempHold", temp, time.Duration(extendRest*60)*time.Second),
+							p.StepConfirmRest(msg, confirm, extendRest, temp),
+						},
+						p.task.Steps[p.task.num+1:]...)...)
+			}
+			return nil
+		},
+	}
 }
 
 /*Hotwater Task template*/
@@ -184,13 +223,13 @@ func (p *Pod) Hotwater(temp float64) {
 }
 
 /*Mash Task template*/
-func (p *Pod) Mash(extendRest int) {
+func (p *Pod) Mash(extendRest int, confirm chan Quest) {
 	task := &Task{
 		Name: "Mash",
 		Steps: []*Step{
 			p.StepAgitatorOn(),
 			p.StepTempUp("TempUp", p.recipe.Mash.InTemperatur),
-			//p.Confirm(), Malt added
+			p.StepConfirm("Malt added? continue...", confirm),
 		},
 	}
 	for num, rast := range p.recipe.Mash.Rests {
@@ -199,12 +238,15 @@ func (p *Pod) Mash(extendRest int) {
 			p.StepTempUp(fmt.Sprintf("Rest %d TempUp", num), rast.Temperatur), // mabye use extra field in Step for additional information like rest num?
 			p.StepTempHold(fmt.Sprintf("Rest %d TempHold", num), rast.Temperatur, time.Duration(rast.Time*60)*time.Second),
 		)
+		if len(p.recipe.Mash.Rests)-2 == num {
+			task.Steps = append(
+				task.Steps,
+				p.StepConfirmRest("jod test successful?", confirm, extendRest, rast.Temperatur),
+			)
+		}
 	}
-
 	p.task = task
 	p.task.step = p.task.Steps[0]
-	//p.Confirm(), jod and if not correct append a new ExtendRest
-
 }
 
 /*MashRast can jump to a specific rast. Not Index Safe*/

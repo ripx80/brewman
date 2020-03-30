@@ -19,9 +19,15 @@ var mashCmd = &cobra.Command{
 		initRecipe()
 		initPods()
 		initChan()
-		cfg.pods.masher.Mash(cfg.conf.Global.HoldTemperatur)
+		initConfirm()
+		cfg.pods.masher.Mash(cfg.conf.Global.HoldTemperatur, cfg.confirm)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		go func() {
+			defer cfg.wg.Done()
+			cfg.wg.Add(1)
+			cfg.confirmFunc()
+		}()
 		go func() {
 			defer cfg.wg.Done()
 			cfg.wg.Add(1)
