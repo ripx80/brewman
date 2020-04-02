@@ -17,7 +17,6 @@ var hotwaterCmd = &cobra.Command{
 		initRecipe()
 		initPods()
 		initChan()
-		cfg.pods.hotwater.Hotwater(cfg.conf.Global.HotwaterTemperatur)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		go func() {

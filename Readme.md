@@ -61,6 +61,7 @@ describe comming soon
 - [ ] list rests and start mash rest tview
 - [ ] add continue flag on rest
 - [ ] add confirm in tview from channel
+- [ ] need to set the reciept per pod
 - [ ] improve code quality and simplicity
 
 0.4

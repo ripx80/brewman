@@ -1,6 +1,7 @@
 package brew
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -26,6 +27,8 @@ type KettleMetric struct {
 	Agitator bool
 	Fail     int
 }
+
+const cancled = "cancled"
 
 /*Metric returns current Metrics from Kettle*/
 func (k *Kettle) Metric() KettleMetric {
@@ -80,7 +83,6 @@ TempUp control the Heater to increase to a given temperature
 Its a blocking function which you can stop with the stop channel
 */
 func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
-
 	var (
 		last    float64
 		temp    float64
@@ -92,7 +94,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 		select {
 		case <-stop:
 			k.Off()
-			return nil
+			return errors.New(cancled)
 		case <-time.After(1 * time.Second):
 			if temp, err = k.TempSet(tempTo); err != nil {
 				return err
@@ -114,7 +116,6 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 				}
 				return nil
 			}
-			// set metrics
 
 			//use zstate and not state because logrus log in alphabetical order. workaround sry
 			log.WithFields(log.Fields{
@@ -146,7 +147,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 		select {
 		case <-stop:
 			k.Off()
-			return nil
+			return errors.New(cancled)
 
 		case <-ttl:
 			return nil
@@ -166,7 +167,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 				k.metric.Fail++
 				failcnt = 0
 			}
-
+			// change this in future
 			log.WithFields(log.Fields{
 				"temperatur":  fmt.Sprintf("%0.2f", temp),
 				"destination": tempTo,

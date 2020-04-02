@@ -18,7 +18,6 @@ var cookCmd = &cobra.Command{
 		initRecipe()
 		initPods()
 		initChan()
-		cfg.pods.cooker.Cook(cfg.conf.Global.CookingTemperatur)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		go func() {

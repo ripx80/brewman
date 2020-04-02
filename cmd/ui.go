@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gdamore/tcell"
+	log "github.com/ripx80/brave/log/logger"
 	"github.com/ripx80/brewman/pkgs/pod"
 	"github.com/rivo/tview"
 )
@@ -18,108 +20,269 @@ const logo string = `  _________       ___.               ___.
 `
 
 /*
-- start ui with brewman only no cmd
 - show logs <l>, save logs Error/Warning to file
-- add steps to rows
-- change between pods
-- add running state to pods
-- start stop pods
-- display current metrics
+- add Calculated run time of step in metric
+- add change recipe
+- add locks on buffer access
+
+future
+- Get list of jobs from pod (to see what will happen)
+	- calculate time of ending
+- at the moment we dont get short jobs like AgiatorOn
 */
 
-var (
-	podView   *tview.Table
-	app       *tview.Application
-	activePod *pod.Pod
-)
+type ui struct {
+	content  *tview.Table
+	app      *tview.Application
+	left     *tview.Table
+	right    *tview.TextView
+	options  *tview.List
+	commands *tview.List
+	buffers  [3]buffer
+	active   uint
+	instant  chan struct{}
+}
 
-func refresh() {
-	viewCfg := &tview.TableCell{Expansion: 1, Align: tview.AlignCenter, Color: tcell.ColorYellow}
+type buffer struct {
+	n string
+	b []pod.PodMetric
+	m sync.Mutex
+}
+
+func (b *buffer) Metric(m pod.PodMetric) {
+	b.m.Lock()
+	defer b.m.Unlock()
+
+	l := len(b.b)
+
+	if l == 0 && !m.Running {
+		return
+	}
+
+	if l == 0 {
+		b.b = append(b.b, m)
+		return
+	}
+
+	if b.b[l-1].Step.Start != m.Step.Start {
+		b.b = append(b.b, m)
+		return
+	}
+	b.b[l-1] = m
+}
+
+func (b *buffer) Clear() {
+	b.b = []pod.PodMetric{}
+}
+
+func (u *ui) Metrics() {
 	for {
 		select {
-		case <-time.After(1 * time.Second):
-			now := time.Now()
-			app.QueueUpdateDraw(func() {
-				drawCell(podView, (podView.GetRowCount() - 1), 2, viewCfg, fmt.Sprintf(now.Format("15:04:05")))
-			})
+		case <-time.After(500 * time.Millisecond):
+			u.buffers[0].Metric(cfg.pods.hotwater.Metric())
+			u.buffers[1].Metric(cfg.pods.masher.Metric())
+			u.buffers[2].Metric(cfg.pods.cooker.Metric())
 		}
 	}
 }
 
-func drawCell(t *tview.Table, rowCount int, num int, cfg *tview.TableCell, value string) {
+func (u *ui) refresh() {
+	for {
+		select {
+		case <-u.instant:
+		case <-time.After(1 * time.Second):
+		}
+		//now := time.Now()
+
+		u.app.QueueUpdateDraw(func() {
+			u.Content()
+		})
+	}
+}
+
+func cell(t *tview.Table, rowCount int, num int, cfg *tview.TableCell, value string) {
 	cell := *cfg // copy
 	cell.Text = value
 	t.SetCell(rowCount, num, &cell)
 }
 
-func drawRow(t *tview.Table, rowCount int, content []string, cfg *tview.TableCell) {
+func row(t *tview.Table, rowCount int, content []string, cfg *tview.TableCell) {
 	for idx, v := range content {
-		drawCell(t, rowCount, idx, cfg, v)
+		cell(t, rowCount, idx, cfg, v)
 	}
 }
 
-func getStringTime() string {
-	t := time.Now()
+func timeString(t time.Time) string {
 	return fmt.Sprintf(t.Format("15:04:05"))
 }
 
 func confirmUI() error { return nil }
 
-func view() error {
-	leftCfg := &tview.TableCell{Expansion: 0, Align: tview.AlignCenter, Color: tcell.ColorYellow}
+func (u *ui) Content() {
+	title := " Pod: [::b]%s(%s) "
+	u.content.Clear().SetBorder(true)
+	u.content.SetBorders(true)
 
-	podName := "Hotwater"
-	app = tview.NewApplication()
-	timeNow := getStringTime()
+	if len(u.buffers[u.active].b) == 0 {
+		u.content.SetTitle(fmt.Sprintf(title, u.buffers[u.active].n, "S")).SetTitleAlign(1).SetTitleColor(tcell.ColorDarkRed)
+		return
+	}
 
-	left := tview.NewTable().SetBorders(true)
-	drawRow(left, left.GetRowCount(), []string{"Version: ", "1.0"}, leftCfg)
-	drawRow(left, left.GetRowCount(), []string{"Recipe: ", "TagIPA"}, leftCfg)
+	m := (u.buffers[u.active].b)[len(u.buffers[u.active].b)-1]
+	run := "S"
+	if m.Running {
+		run = "R"
+	}
+	u.content.SetTitle(fmt.Sprintf(title, u.buffers[u.active].n, run)).SetTitleAlign(1).SetTitleColor(tcell.ColorDarkRed)
+	row(u.content,
+		u.content.GetRowCount(),
+		[]string{
+			"[::b]Step",
+			"[::b]StartTime",
+			"[::b]Time",
+			"[::b]HoldTime",
+			"[::b]TempStart",
+			"[::b]Temp",
+			"[::b]TempEnd",
+			"[::b]State",
+			"[::b]Fail",
+		},
+		&tview.TableCell{
+			Expansion: 1,
+			Align:     tview.AlignCenter,
+			Color:     tcell.ColorAqua,
+		})
 
-	// add as list pods for Hotwater, Masher, Cooker so you can switch.
-	// need to set the reciept
+	for _, m := range u.buffers[u.active].b {
+		row(u.content, u.content.GetRowCount(), []string{
+			m.StepName,
+			timeString(m.Step.Start),
+			"notset",
+			fmt.Sprintf("%d", m.Step.Hold/time.Minute),
+			fmt.Sprintf("%02f", m.Step.TempStart),
+			fmt.Sprintf("%02f", m.Kettle.Temp),
+			fmt.Sprintf("%02f", m.Step.TempEnd),
+			fmt.Sprintf("%t", m.Kettle.Heater),
+			fmt.Sprintf("%d", m.Kettle.Fail),
+		},
+			&tview.TableCell{
+				Expansion: 1,
+				Align:     tview.AlignCenter,
+				Color:     tcell.ColorYellow,
+			},
+		)
+	}
+}
 
-	middle := tview.NewList().
-		// AddItem("<?>", "Help", '?', nil).
+func Logo() *tview.TextView {
+	return tview.NewTextView().
+		SetText(logo).
+		SetTextColor(tcell.ColorDarkRed).
+		SetTextAlign(tview.AlignLeft)
+}
 
+// inefficent buf as arg use a choice
+func (u *ui) Commands(name string, pod *pod.Pod) {
+	u.commands.Clear().
+		AddItem("Run", "start pod", 'r', func() {
+			if !pod.Metric().Running {
+				u.content.Clear()
+				// clear buffer
+				u.buffers[u.active].Clear()
+				go func() {
+					defer cfg.wg.Done()
+					cfg.wg.Add(1)
+					if err := pod.Run(); err != nil {
+						log.WithFields(log.Fields{
+							"pod":   name,
+							"error": err,
+						}).Error("pod job run failed")
+					}
+					//draw finish row
+				}()
+				u.Instant()
+			}
+
+		}).
+		AddItem("Stop", "stop pod", 's', func() {
+			pod.Stop()
+		}).
+		AddItem("Recipe", "change recipe", 'c', func() {
+
+		}).
+		AddItem("Back", "go back menu", 'b', func() {
+			u.commands.Clear()
+			u.app.SetFocus(u.options)
+		})
+	u.app.SetFocus(u.commands)
+}
+
+func (u *ui) Instant() {
+	u.instant <- struct{}{}
+}
+
+func (u *ui) Options() *tview.List {
+	return tview.NewList().
 		AddItem("Hotwater", "Select Hotwater Pod", 'h', func() {
-			activePod = cfg.pods.hotwater
-			//render podview
+			u.Commands("hotwater", cfg.pods.hotwater)
+			u.active = 0
+			u.Instant()
+
 		}).
 		AddItem("Masher", "Select Masher pod", 'm', func() {
-			activePod = cfg.pods.masher
+			u.Commands("masher", cfg.pods.masher)
+			u.active = 1
+			u.Instant()
 		}).
 		AddItem("Cooker", "Select Cooker pod", 'c', func() {
-			activePod = cfg.pods.cooker
+			u.Commands("cooker", cfg.pods.cooker)
+			u.active = 2
+			u.Instant()
 		}).
 		AddItem("Quit", "Press to exit", 'q', func() {
-			app.Stop()
+			u.app.Stop()
 		}).
-		AddItem("Logs", "Logs", 'l', nil)
+		AddItem("Logs", "Logs", 'l', nil).
+		SetWrapAround(true).
+		ShowSecondaryText(false)
+}
 
-	middle.SetWrapAround(true)
-	middle.ShowSecondaryText(false)
+func view() error {
+	var view ui
+	view = ui{
+		content:  tview.NewTable(),
+		app:      tview.NewApplication(),
+		left:     tview.NewTable().SetBorders(true),
+		right:    Logo(),
+		options:  tview.NewList(),
+		commands: tview.NewList().ShowSecondaryText(false),
+		buffers: [3]buffer{
+			buffer{n: "Hotwater", b: []pod.PodMetric{}, m: sync.Mutex{}},
+			buffer{n: "Masher", b: []pod.PodMetric{}, m: sync.Mutex{}},
+			buffer{n: "Cooker", b: []pod.PodMetric{}, m: sync.Mutex{}},
+		},
+		instant: make(chan struct{}),
+		active:  0,
+	}
+	view.options = view.Options()
 
-	logoBox := tview.NewTextView()
-	logoBox.SetText(logo)
-	logoBox.SetTextColor(tcell.ColorDarkRed)
-	logoBox.SetTextAlign(tview.AlignLeft)
+	leftCfg := &tview.TableCell{Expansion: 0, Align: tview.AlignCenter, Color: tcell.ColorYellow}
 
-	podView = tview.NewTable()
-	podView.SetBorder(true)
-	podView.SetBorders(true)
-	podView.SetTitle(fmt.Sprintf("  Pod: [::b]%s ", podName)).SetTitleAlign(1).SetTitleColor(tcell.ColorDarkRed)
-
-	drawRow(podView, podView.GetRowCount(), []string{"[::b]Step", "[::b]StartTime", "[::b]Time", "[::b]HoldTime", "[::b]TempStart", "[::b]Temp", "[::b]TempEnd", "[::b]State", "[::b]Fail"}, &tview.TableCell{Expansion: 1, Align: tview.AlignCenter, Color: tcell.ColorAqua})
-	drawRow(podView, podView.GetRowCount(), []string{"increase", timeNow, timeNow, "60:00", "43.23", "53.34", "62.00", "on", "0"}, &tview.TableCell{Expansion: 1, Align: tview.AlignCenter, Color: tcell.ColorYellow})
+	row(view.left, view.left.GetRowCount(), []string{"Version: ", version}, leftCfg)
+	row(view.left, view.left.GetRowCount(), []string{"Recipe: ", cfg.recipe.Global.Name}, leftCfg)
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
-			AddItem(left, 0, 1, false).
-			AddItem(middle, 0, 1, true).
-			AddItem(logoBox, 0, 2, false), 0, 1, true).
+			AddItem(view.left, 0, 1, false).
+			AddItem(view.options, 0, 1, true).
+			AddItem(view.commands, 0, 1, true).
+			AddItem(view.right, 0, 3, false), 0, 1, true).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(podView, 0, 1, false), 0, 3, false)
-	go refresh()
-	return app.SetRoot(flex, true).Run()
+			AddItem(view.content, 0, 1, false), 0, 3, false)
+
+	go view.Metrics()
+	go view.refresh()
+	view.instant <- struct{}{}
+
+	return view.app.SetRoot(flex, true).Run()
 }
