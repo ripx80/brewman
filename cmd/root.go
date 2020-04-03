@@ -37,8 +37,8 @@ controls multiple pods with different types of recipes and tasks.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		initRecipe()
+		initChan() // chan before pods!
 		initPods()
-		initChan()
 		cfg.ui = true
 		//set logfile for ui or use a in memory logger
 		f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE, 0755)
@@ -121,6 +121,7 @@ func initChan() {
 	// threads, add data chan, error chan
 	cfg.signals = make(chan os.Signal, 1)
 	cfg.stop = make(chan struct{})
+	cfg.confirm = make(chan pod.Quest)
 	cfg.done = make(chan struct{}, 2) // buff because after closing stop nobody will recive
 	signal.Notify(cfg.signals, syscall.SIGINT, syscall.SIGTERM)
 	cfg.wg = new(sync.WaitGroup)
@@ -156,16 +157,6 @@ func confirmConsole() error {
 
 		}
 	}
-}
-
-func initConfirm() {
-	cfg.confirm = make(chan pod.Quest)
-	if cfg.ui {
-		cfg.confirmFunc = confirmUI
-	} else {
-		cfg.confirmFunc = confirmConsole
-	}
-
 }
 
 func getLogrus() *logrus.Logger {
@@ -274,7 +265,7 @@ func handle() {
 		cfg.pods.masher.Stop()
 		cfg.pods.cooker.Stop()
 		//cfg.wg.Wait() check this when finish, confirm hangs
-		work.WaitTimeout(cfg.wg, 5*time.Second) // wait for all workers with timeout
+		work.WaitTimeout(cfg.wg, 1*time.Second) // wait for all workers with timeout
 		exit.Exit(0)                            // check the return
 	}
 }

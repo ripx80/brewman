@@ -24,7 +24,10 @@ const brand string = `  _________       ___.               ___.
 - show logs <l>, save logs Error/Warning to file
 - add change recipe
 - add locks on buffer access
-- add confirm ui
+- add wg group and stop on routines
+- set step name to left align
+- adjust colors
+- add finish Step to display
 
 future
 - Get list of jobs from pod (to see what will happen)
@@ -33,15 +36,17 @@ future
 */
 
 type ui struct {
-	content  *tview.Table
-	app      *tview.Application
-	left     *tview.Table
-	right    *tview.TextView
-	options  *tview.List
-	commands *tview.List
-	buffers  [3]buffer
-	active   uint
-	instant  chan struct{}
+	content   *tview.Table
+	container *tview.Flex
+	app       *tview.Application
+	left      *tview.Table
+	right     *tview.TextView
+	options   *tview.List
+	commands  *tview.List
+	modal     *tview.Modal
+	buffers   [3]buffer
+	active    uint
+	instant   chan struct{}
 }
 
 type buffer struct {
@@ -89,10 +94,30 @@ func (u *ui) Metrics() {
 }
 
 func (u *ui) refresh() {
+	var quest pod.Quest
 	for {
 		select {
+		case quest = <-cfg.confirm:
 		case <-u.instant:
 		case <-time.After(1 * time.Second):
+		}
+		if quest != (pod.Quest{}) {
+			u.modal = tview.NewModal().
+				SetText(quest.Msg).
+				AddButtons([]string{"Yes", "No"}).
+				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+					if buttonLabel == "Yes" {
+						cfg.confirm <- pod.Quest{Msg: "y", Asw: true}
+					}
+					if buttonLabel == "No" {
+						cfg.confirm <- pod.Quest{Msg: "n", Asw: false}
+					}
+					u.container.RemoveItem(u.modal)
+				})
+			u.app.SetFocus(u.modal)
+			u.container.AddItem(u.modal, 0, 1, true)
+			quest = pod.Quest{}
+			continue
 		}
 		u.app.QueueUpdateDraw(func() {
 			u.Content()
@@ -115,8 +140,6 @@ func row(t *tview.Table, rowCount int, content []string, cfg *tview.TableCell) {
 func timeString(t time.Time) string {
 	return fmt.Sprintf(t.Format("15:04:05"))
 }
-
-func confirmUI() error { return nil }
 
 func (u *ui) Content() {
 	title := " Pod: [::b]%s(%s) "
@@ -188,7 +211,7 @@ func (u *ui) Content() {
 	}
 }
 
-func Logo(brand string) *tview.TextView {
+func logo(brand string) *tview.TextView {
 	return tview.NewTextView().
 		SetText(brand).
 		SetTextColor(tcell.ColorDarkRed).
@@ -264,12 +287,14 @@ func (u *ui) Options() *tview.List {
 func view() error {
 	var view ui
 	view = ui{
-		content:  tview.NewTable(),
-		app:      tview.NewApplication(),
-		left:     tview.NewTable().SetBorders(true),
-		right:    Logo(brand),
-		options:  tview.NewList(),
-		commands: tview.NewList().ShowSecondaryText(false),
+		content:   tview.NewTable(),
+		container: tview.NewFlex(),
+		app:       tview.NewApplication(),
+		left:      tview.NewTable().SetBorders(true),
+		right:     logo(brand),
+		options:   tview.NewList(),
+		commands:  tview.NewList().ShowSecondaryText(false),
+		modal:     tview.NewModal(),
 		buffers: [3]buffer{
 			buffer{n: "Hotwater", b: []pod.PodMetric{}, m: sync.Mutex{}},
 			buffer{n: "Masher", b: []pod.PodMetric{}, m: sync.Mutex{}},
@@ -285,7 +310,7 @@ func view() error {
 	row(view.left, view.left.GetRowCount(), []string{"Version: ", version}, leftCfg)
 	row(view.left, view.left.GetRowCount(), []string{"Recipe: ", cfg.recipe.Global.Name}, leftCfg)
 
-	flex := tview.NewFlex().SetDirection(tview.FlexRow).
+	view.container = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
 			AddItem(view.left, 0, 1, false).
 			AddItem(view.options, 0, 1, true).
@@ -297,6 +322,5 @@ func view() error {
 	go view.Metrics()
 	go view.refresh()
 	view.instant <- struct{}{}
-
-	return view.app.SetRoot(flex, true).Run()
+	return view.app.SetRoot(view.container, true).Run()
 }

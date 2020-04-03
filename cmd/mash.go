@@ -17,15 +17,14 @@ var mashCmd = &cobra.Command{
 	Long:  `start the mash procedure given in recipe`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		initRecipe()
+		initChan() // chans before pods, need confirm channel
 		initPods()
-		initChan()
-		initConfirm()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		go func() {
 			defer cfg.wg.Done()
 			cfg.wg.Add(1)
-			cfg.confirmFunc()
+			confirmConsole()
 		}()
 		go func() {
 			defer cfg.wg.Done()
