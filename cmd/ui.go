@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-const logo string = `  _________       ___.               ___.
+const brand string = `  _________       ___.               ___.
   \_   ___ \___.__\_ |__   __________\_ |_________  ______  _  __
   /    \  \<   |  || __ \_/ __ \_  __ | __ \_  __ _/ __ \ \/ \/ /
   \     \___\___  || \_\ \  ___/|  | \| \_\ |  | \\  ___/\     /
@@ -21,9 +22,9 @@ const logo string = `  _________       ___.               ___.
 
 /*
 - show logs <l>, save logs Error/Warning to file
-- add Calculated run time of step in metric
 - add change recipe
 - add locks on buffer access
+- add confirm ui
 
 future
 - Get list of jobs from pod (to see what will happen)
@@ -65,6 +66,7 @@ func (b *buffer) Metric(m pod.PodMetric) {
 	}
 
 	if b.b[l-1].Step.Start != m.Step.Start {
+		b.b[l-1].Step.End = time.Now() // its a hack
 		b.b = append(b.b, m)
 		return
 	}
@@ -92,8 +94,6 @@ func (u *ui) refresh() {
 		case <-u.instant:
 		case <-time.After(1 * time.Second):
 		}
-		//now := time.Now()
-
 		u.app.QueueUpdateDraw(func() {
 			u.Content()
 		})
@@ -153,12 +153,26 @@ func (u *ui) Content() {
 			Color:     tcell.ColorAqua,
 		})
 
+	now := time.Now()
+	var runtime time.Duration
 	for _, m := range u.buffers[u.active].b {
+		if m.Step.End.IsZero() {
+			runtime = now.Sub(m.Step.Start).Round(time.Second)
+		} else {
+			runtime = m.Step.End.Sub(m.Step.Start).Round(time.Second)
+		}
+		var hold string
+		if m.Step.Hold == 0 {
+			hold = "-"
+		} else {
+			hold = fmt.Sprintf("%d", m.Step.Hold/time.Minute)
+		}
+
 		row(u.content, u.content.GetRowCount(), []string{
 			m.StepName,
 			timeString(m.Step.Start),
-			"notset",
-			fmt.Sprintf("%d", m.Step.Hold/time.Minute),
+			fmt.Sprintf("%02d:%02.f", runtime/time.Minute, math.Mod(runtime.Seconds(), 60)),
+			hold,
 			fmt.Sprintf("%02f", m.Step.TempStart),
 			fmt.Sprintf("%02f", m.Kettle.Temp),
 			fmt.Sprintf("%02f", m.Step.TempEnd),
@@ -174,9 +188,9 @@ func (u *ui) Content() {
 	}
 }
 
-func Logo() *tview.TextView {
+func Logo(brand string) *tview.TextView {
 	return tview.NewTextView().
-		SetText(logo).
+		SetText(brand).
 		SetTextColor(tcell.ColorDarkRed).
 		SetTextAlign(tview.AlignLeft)
 }
@@ -253,7 +267,7 @@ func view() error {
 		content:  tview.NewTable(),
 		app:      tview.NewApplication(),
 		left:     tview.NewTable().SetBorders(true),
-		right:    Logo(),
+		right:    Logo(brand),
 		options:  tview.NewList(),
 		commands: tview.NewList().ShowSecondaryText(false),
 		buffers: [3]buffer{

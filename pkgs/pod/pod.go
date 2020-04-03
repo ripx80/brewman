@@ -67,9 +67,11 @@ func (p *Pod) Run() error {
 	p.run = true
 	// num of steps can change, dont use range
 	for i := 0; i < len(p.task.Steps); i++ {
+
 		p.task.num = i
 		s = p.task.Steps[i]
 		s.Metric.Start = time.Now()
+		s.Metric.End = time.Time{}
 		s.Metric.TempStart, _ = p.Kettle.Temp.Get() // no buffer for first set
 		p.task.step = s
 

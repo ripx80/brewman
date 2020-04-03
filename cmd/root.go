@@ -35,13 +35,10 @@ var rootCmd = &cobra.Command{
 	Long: `When you brew your own beer the time is comming to do it with some more cyberpunk stuff.
 controls multiple pods with different types of recipes and tasks.
 	`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		initRecipe()
 		initPods()
 		initChan()
-		//init pods with tasks
-	},
-	Run: func(cmd *cobra.Command, args []string) {
 		cfg.ui = true
 		//set logfile for ui or use a in memory logger
 		f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE, 0755)
