@@ -1,12 +1,22 @@
 package cmd
 
+/*
+## Improve Code Quality
+
+- [ ] Set Recipes per pod in each cmd or ui
+- [ ] Check all namings. simplicity?
+- [ ] Check dependencies. All necessary?
+- [ ] Remove log in libs. use the metrics and a timer (kettle)
+- [ ] When not log in libs. need the logger interface?
+- [ ] Use Static Errors?
+- [ ] Check all routines if ended with stop (ui) use wg group wait to check
+- [ ] check the output format flag: text,json,yaml
+*/
+
 import (
 	"fmt"
 	"os"
-	"os/signal"
-	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/ripx80/brave/exit"
@@ -16,9 +26,7 @@ import (
 	"github.com/ripx80/brewman/config"
 	"github.com/ripx80/brewman/pkgs/pod"
 	"github.com/ripx80/recipe"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/validator.v2"
 )
 
 const (
@@ -114,142 +122,6 @@ func init() {
 	rootCmd.AddCommand(mashCmd)
 	rootCmd.AddCommand(cookCmd)
 	rootCmd.AddCommand(controlCmd)
-}
-
-func initChan() {
-	// threads, add data chan, error chan
-	cfg.signals = make(chan os.Signal, 1)
-	cfg.stop = make(chan struct{})
-	cfg.confirm = make(chan pod.Quest)
-	cfg.done = make(chan struct{}, 2) // buff because after closing stop nobody will recive
-	signal.Notify(cfg.signals, syscall.SIGINT, syscall.SIGTERM)
-	cfg.wg = new(sync.WaitGroup)
-}
-
-func confirmConsole() error {
-	var quest pod.Quest
-	opt := "use y/n"
-	for {
-		select {
-		case <-cfg.stop:
-			return nil
-		case quest = <-cfg.confirm:
-			var response string
-			fmt.Printf("%s (Y/n)", quest.Msg)
-			l, err := fmt.Scan(&response)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err,
-				}).Error("canot read response")
-			}
-			if l > 3 {
-				log.Info(opt) // was a warning
-				continue
-			}
-			response = strings.ToLower(response)
-			switch response {
-			case "n":
-				cfg.confirm <- pod.Quest{Msg: "n", Asw: false}
-			default:
-				cfg.confirm <- pod.Quest{Msg: "y", Asw: true}
-			}
-
-		}
-	}
-}
-
-func getLogrus() *logrus.Logger {
-	logr := logrus.New()
-	if cfg.debug {
-		logr.SetLevel(logrus.DebugLevel)
-	}
-
-	if cfg.format == "json" {
-		jf := logrus.JSONFormatter{}
-		//jf.PrettyPrint = true
-		logr.SetFormatter(&jf)
-	}
-	return logr
-}
-
-func initLogger() {
-	// use a wrapper for the WithFields func
-	log.Set(logrusBrave.Configured(getLogrus()))
-}
-
-func initPods() {
-	var err error
-
-	hotwater, err := getKettle(cfg.conf.Hotwater)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error":  err,
-			"kettle": "hotwater",
-		}).Error("init failed")
-		exit.Exit(1)
-	}
-	cfg.pods.hotwater = pod.New(hotwater, cfg.recipe)
-	cfg.pods.hotwater.Hotwater(cfg.conf.Global.HotwaterTemperatur)
-
-	masher, err := getKettle(cfg.conf.Masher)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error":  err,
-			"kettle": "masher",
-		}).Error("init failed")
-		exit.Exit(1)
-	}
-	cfg.pods.masher = pod.New(masher, cfg.recipe)
-	cfg.pods.masher.Mash(cfg.conf.Global.HoldTemperatur, cfg.confirm)
-
-	cooker, err := getKettle(cfg.conf.Cooker)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error":  err,
-			"kettle": "cooker",
-		}).Error("init failed")
-		exit.Exit(1)
-	}
-	cfg.pods.cooker = pod.New(cooker, cfg.recipe)
-	cfg.pods.cooker.Cook(cfg.conf.Global.CookingTemperatur)
-}
-
-func initRecipe() {
-	var err error
-	cfg.recipe, err = recipe.LoadFile(cfg.conf.Recipe.File, &recipe.Recipe{})
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error":  err,
-			"recipe": cfg.conf.Recipe.File,
-		}).Error("init recipe")
-		exit.Exit(1)
-	}
-}
-
-func initConfig() {
-	cfg.conf, _ = config.Load("")
-	var err error
-
-	if cfg.file != "" {
-		cfg.conf, err = config.LoadFile(cfg.file)
-		if err != nil {
-			fmt.Printf("can not load configuration file: %s\n", cfg.file)
-			exit.Exit(1)
-		}
-	} else {
-		cfg.file = configfile
-		if _, err := os.Stat(cfg.file); err == nil {
-			cfg.conf, err = config.LoadFile(cfg.file)
-			if err != nil {
-				fmt.Printf("can not load configuration file: %s\n", cfg.file)
-				exit.Exit(1)
-			}
-		}
-	}
-	if err := validator.Validate(cfg.conf); err != nil {
-		fmt.Printf("config file validation failed: %s\n", err)
-		exit.Exit(1)
-	}
 }
 
 func handle() {

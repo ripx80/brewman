@@ -17,7 +17,7 @@ var mashCmd = &cobra.Command{
 	Long:  `start the mash procedure given in recipe`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		initRecipe()
-		initChan() // chans before pods, need confirm channel
+		initChan() // chans before pods, need confirm channel. better in root for all?
 		initPods()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
