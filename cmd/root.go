@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	version    string = "0.2"
+	version    string = "0.3"
 	name       string = "brewman"
 	configfile string = "brewman.yaml"
 	logfile    string = "brewman.log"
@@ -40,16 +40,15 @@ controls multiple pods with different types of recipes and tasks.
 		initChan() // chan before pods!
 		initPods()
 		cfg.ui = true
-		//set logfile for ui or use a in memory logger
-		f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE, 0755)
+		f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE, 0644)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
-			}).Error("canot open log file")
+			}).Error("can not open log file")
 		}
 		logr := getLogrus()
 		logr.SetOutput(f)
-
+		logr.SetLevel(2) // ErrorLevel
 		log.Set(logrusBrave.Configured(logr))
 
 		go func() {

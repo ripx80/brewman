@@ -56,27 +56,28 @@ describe comming soon
 
 0.3
 
-- [ ] use interactive mode - use a fancy terminal to show temps (tview)
-- [ ] switch between pods and set recipe in tview
-- [ ] list rests and start mash rest tview
-- [ ] add continue flag on rest
-- [ ] add confirm in tview from channel
-- [ ] need to set the reciept per pod
+- [x] use interactive mode - use a fancy terminal to show temps (tview)
+- [x] switch between pods
+- [x] add confirm in tview from channel
+- [x] correct color scheme ui
 - [ ] improve code quality and simplicity
 
 0.4
 
-- [ ] recipies: calculate other water/size informations
-- [ ] add more debug informations
+- [ ] ui set the reciept per pod
+- [ ] add continue flag on rest
 - [ ] add all test files, use testify and testify/mocking
-- [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
 - [ ] Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
-- [ ] Metric Exporter: Prometheus, NodeExporter and internal
 
 0.5
 
-- [ ] Webinterface with Vue.js
+- [ ] recipies: calculate other water/size informations
+- [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
+
+0.6
+
 - [ ] grab Status from api
+- [ ] Metric Exporter: Prometheus, NodeExporter and internal
 - [ ] grab Metrics from Prometheus
 
 ## Units

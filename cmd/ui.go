@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math"
 	"sync"
 	"time"
@@ -21,12 +22,9 @@ const brand string = `  _________       ___.               ___.
 `
 
 /*
-- show logs <l>, save logs Error/Warning to file
 - add change recipe
 - add locks on buffer access
 - add wg group and stop on routines
-- set step name to left align
-- adjust colors
 - add finish Step to display
 
 future
@@ -147,7 +145,7 @@ func (u *ui) Content() {
 	u.content.SetBorders(true)
 
 	if len(u.buffers[u.active].b) == 0 {
-		u.content.SetTitle(fmt.Sprintf(title, u.buffers[u.active].n, "S")).SetTitleAlign(1).SetTitleColor(tcell.ColorDarkRed)
+		u.content.SetTitle(fmt.Sprintf(title, u.buffers[u.active].n, "S")).SetTitleAlign(1).SetTitleColor(tcell.ColorDeepPink)
 		return
 	}
 
@@ -156,7 +154,7 @@ func (u *ui) Content() {
 	if m.Running {
 		run = "R"
 	}
-	u.content.SetTitle(fmt.Sprintf(title, u.buffers[u.active].n, run)).SetTitleAlign(1).SetTitleColor(tcell.ColorDarkRed)
+	u.content.SetTitle(fmt.Sprintf(title, u.buffers[u.active].n, run)).SetTitleAlign(1).SetTitleColor(tcell.ColorDeepPink)
 	row(u.content,
 		u.content.GetRowCount(),
 		[]string{
@@ -188,7 +186,7 @@ func (u *ui) Content() {
 		if m.Step.Hold == 0 {
 			hold = "-"
 		} else {
-			hold = fmt.Sprintf("%d", m.Step.Hold/time.Minute)
+			hold = fmt.Sprintf("%02d:%02.f", m.Step.Hold/time.Minute, math.Mod(m.Step.Hold.Seconds(), 60))
 		}
 
 		row(u.content, u.content.GetRowCount(), []string{
@@ -214,7 +212,7 @@ func (u *ui) Content() {
 func logo(brand string) *tview.TextView {
 	return tview.NewTextView().
 		SetText(brand).
-		SetTextColor(tcell.ColorDarkRed).
+		SetTextColor(tcell.ColorRed).
 		SetTextAlign(tview.AlignLeft)
 }
 
@@ -244,14 +242,31 @@ func (u *ui) Commands(name string, pod *pod.Pod) {
 		AddItem("Stop", "stop pod", 's', func() {
 			pod.Stop()
 		}).
-		AddItem("Recipe", "change recipe", 'c', func() {
-
-		}).
+		// AddItem("Recipe", "change recipe", 'c', func() {}).
 		AddItem("Back", "go back menu", 'b', func() {
 			u.commands.Clear()
 			u.app.SetFocus(u.options)
 		})
 	u.app.SetFocus(u.commands)
+}
+
+func (u *ui) Logs(fp string) {
+	content, err := ioutil.ReadFile(fp)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("can not read from file")
+	}
+	u.modal = tview.NewModal().
+		SetText(fmt.Sprintf("%s", content)).
+		AddButtons([]string{"close"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			u.container.RemoveItem(u.modal)
+			u.app.SetFocus(u.options)
+		})
+
+	u.app.SetFocus(u.modal)
+	u.container.AddItem(u.modal, 0, 1, true)
 }
 
 func (u *ui) Instant() {
@@ -276,10 +291,12 @@ func (u *ui) Options() *tview.List {
 			u.active = 2
 			u.Instant()
 		}).
+		AddItem("Logs", "Logs", 'l', func() {
+			u.Logs(logfile)
+		}).
 		AddItem("Quit", "Press to exit", 'q', func() {
 			u.app.Stop()
 		}).
-		AddItem("Logs", "Logs", 'l', nil).
 		SetWrapAround(true).
 		ShowSecondaryText(false)
 }
@@ -290,7 +307,7 @@ func view() error {
 		content:   tview.NewTable(),
 		container: tview.NewFlex(),
 		app:       tview.NewApplication(),
-		left:      tview.NewTable().SetBorders(true),
+		left:      tview.NewTable(),
 		right:     logo(brand),
 		options:   tview.NewList(),
 		commands:  tview.NewList().ShowSecondaryText(false),
@@ -305,10 +322,10 @@ func view() error {
 	}
 	view.options = view.Options()
 
-	leftCfg := &tview.TableCell{Expansion: 0, Align: tview.AlignCenter, Color: tcell.ColorYellow}
+	leftCfg := &tview.TableCell{Expansion: 0, Align: tview.AlignLeft, Color: tcell.ColorAqua}
 
-	row(view.left, view.left.GetRowCount(), []string{"Version: ", version}, leftCfg)
-	row(view.left, view.left.GetRowCount(), []string{"Recipe: ", cfg.recipe.Global.Name}, leftCfg)
+	row(view.left, view.left.GetRowCount(), []string{"[::b]Version: ", version}, leftCfg)
+	row(view.left, view.left.GetRowCount(), []string{"[::b]Recipe: ", cfg.recipe.Global.Name}, leftCfg)
 
 	view.container = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
