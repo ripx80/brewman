@@ -60,7 +60,10 @@ describe comming soon
 - [x] switch between pods
 - [x] add confirm in tview from channel
 - [x] correct color scheme ui
+- [x] recipies: calculate other water/size informations
 - [ ] improve code quality and simplicity
+- [ ] add explicit usage in subcommands of cmds
+- [ ] bug: out in json, yaml or text
 
 0.4
 
@@ -68,13 +71,9 @@ describe comming soon
 - [ ] add continue flag on rest
 - [ ] add all test files, use testify and testify/mocking
 - [ ] Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
-
-0.5
-
-- [ ] recipies: calculate other water/size informations
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
 
-0.6
+0.5
 
 - [ ] grab Status from api
 - [ ] Metric Exporter: Prometheus, NodeExporter and internal

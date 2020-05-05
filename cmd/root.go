@@ -114,6 +114,7 @@ func init() {
 	rootCmd.AddCommand(mashCmd)
 	rootCmd.AddCommand(cookCmd)
 	rootCmd.AddCommand(controlCmd)
+	rootCmd.AddCommand(recipeCmd)
 }
 
 func initChan() {
