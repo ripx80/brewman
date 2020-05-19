@@ -26,6 +26,8 @@ const brand string = `  _________       ___.               ___.
 - add locks on buffer access
 - add wg group and stop on routines
 - add finish Step to display
+- bug: if you display logs in modal and a modal question appears no focus!
+		use u.content to display logs
 
 future
 - Get list of jobs from pod (to see what will happen)
@@ -100,6 +102,12 @@ func (u *ui) refresh() {
 		case <-time.After(1 * time.Second):
 		}
 		if quest != (pod.Quest{}) {
+			// check if options or cmd has focus
+			tp := u.commands
+			if u.options.GetFocusable().HasFocus() {
+				tp = u.options
+			}
+
 			u.modal = tview.NewModal().
 				SetText(quest.Msg).
 				AddButtons([]string{"Yes", "No"}).
@@ -111,6 +119,7 @@ func (u *ui) refresh() {
 						cfg.confirm <- pod.Quest{Msg: "n", Asw: false}
 					}
 					u.container.RemoveItem(u.modal)
+					u.app.SetFocus(tp)
 				})
 			u.app.SetFocus(u.modal)
 			u.container.AddItem(u.modal, 0, 1, true)
