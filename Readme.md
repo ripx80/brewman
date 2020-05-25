@@ -64,6 +64,7 @@ describe comming soon
 - [ ] improve code quality and simplicity
 - [ ] add explicit usage in subcommands of cmds
 - [ ] bug: out in json, yaml or text
+-  bug: maisher run after confirm no focus to main window to go back. get n and y 
 
 0.4
 
