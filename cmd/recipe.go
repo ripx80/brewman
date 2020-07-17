@@ -42,7 +42,6 @@ var recipeScale = &cobra.Command{
 	`,
 	Args: cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-
 		water, err := strconv.ParseFloat(args[1], 64)
 		if err != nil {
 			fmt.Println(err)
@@ -55,12 +54,12 @@ var recipeScale = &cobra.Command{
 		}
 		rec, err := recipe.LoadFile(args[0], &recipe.Recipe{})
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Invalid recipe format: %v\n", err)
 			return
 		}
 		rScale, err := rec.Scale(water, yield)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Can not scale recipe: %v\n", err)
 			return
 		}
 		fmt.Println(rScale)

@@ -14,9 +14,3 @@ func TestLoadConfig(t *testing.T) {
 	// expectedConf.original = c.original
 	// assert.Equal(t, expectedConf, c)
 }
-
-func TestBadConfigs(t *testing.T) {
-	_, err := LoadFile("testdata/conf_bad_sensors.yaml")
-	assert.Error(t, err)
-
-}
