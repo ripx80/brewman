@@ -1,22 +1,52 @@
-## general func
 
-- args: parse, check
-- config: read, check
-- recipe: read, verify (time, temp values)
-- sensors: initilize, check, use
-- controls: initilize, check, use
-- execute recipe plan
-- execute metric endpoint
+# DevBook
 
-## config
+- [ ] (I) write tests
+- [ ] (I) recipe change in ui
+- [ ] (I) prom metric exporter
+- [ ] (I) clear docs
+- [ ] (I) gocardreport
+- [ ] (I) remove unuses subcommands like get called
+- [ ] (I) include dummy and overwrite config if dummy is selected
+- [ ] (I) include docker
+- [ ] (I) include es docker-compose up
+- [ ] (I) serach for a way to sort the yaml to have the same view (https://blog.labix.org/2014/09/22/announcing-yaml-v2-for-go#mapslice)
+- [ ] (I) cmd metric flag for humans
+- [ ] (I) recipe, read, verify (time, temp values)
+- [ ] (I) wire proto direct not over file, hanging
+- [ ] (I) add contrib dir with additonal soft, like scripts or es stuff
 
-config values of bus is string because periph need a string input: 40, PWM0, GPIO40 are the same
+- [ ] (F) round values of scaled recipes
+- [ ] (F) nach der letzten Rast beendet das Programm ohne auf Abmaishtemp zu gehen und Schaltet nicht aus!
+- [ ] (F) control off mash hat den hotwater auch aus gemacht!
+- [ ] (F) brewman not stop on hotwater ui
+- [ ] (F) jod test eins zu früh, muss beim springen auf abmaischtemperatur angezeigt werden. Im moment wird er bei dem sprung zur letzten Rast angezeigt, in diesem Fall 76C (Simcoe4 Rezept)
+- [ ] (F) gpio read failed, for first time starting brewman, crashed main window ui, maybe a retry and failcount
+- [ ] (F) after exit does not turn off the heater
+- [ ] (F) fail count must be more tollerant and respect float points (0.06 steps earch second)
+- [ ] (F) get recipe not working, better errors on recipe parsing after scale on web, check input file if yaml on scale
+- [ ] (F) cmd log output set zstate true in red
+- [ ] (F) cmd log ouput add time actual to
 
-## struct
+- [ ] (HF) maisher dreht nicht, motor läuft dreht aber nicht, hin und wieder
+- [ ] (HF) schleifen beim maishen
+- [ ] (HF) hotwater nicht dicht am Hahn
+- [ ] (HF) längere kabel für temp sensoren
+- [ ] (H) verlängerungskabel
+- [ ] (H) Loch im Maisher für Temp Sensor
+- [ ] (H) Schaltkasten für Raspberry
+- [ ] (HF) vordere schraube maisher am Dockel motor anziehen. Starke vibration
 
-Valves not supproted yet
+- [ ] rot: hotwater
+- [ ] weiß: masher
+- [ ] green: cooker
 
-(Full Program, All Steps can be independently start from each other)
+Rezept geändert:
+Whirpool von 27g auf 30g erhöht.
+
+## Info
+
+config values of bus 40, PWM0, GPIO40 need string values
 
 ### Mesh
 
@@ -36,10 +66,6 @@ Valves not supproted yet
 - Reach Cook Temp: Cooking Time, Info about Hops/Ingredients get in! (message with beep and terminal)
 - Finish Cook Time: Stop(confirm), Whirlpool Info
 
-### Fermentation
-
-- Info About Fermentation
-
 ### Yaml
 
 Using ghodss/yaml and not the pure go-yaml/yaml.
@@ -48,7 +74,6 @@ In short, this library first converts YAML to JSON using go-yaml and then uses j
 ### Implementation
 
 ```go
-
 // Control Elements
 struct Valve interface
     func Open()
@@ -72,64 +97,10 @@ struct Thermometer type
 struct WaterLevel type
 
 // Outputs
-
 struct Output interface
 struct Screen type
 struct Terminal type
 struct Prometheus type
-
-
-// Rührwerk
-struct Agitator type
-    Name string
-    Control: Control Element
-
-struct Heater type
-    Name string
-    Agitator
-    Logic *Logic //Hysteresis (Ursache/Wirking -> Heizen), Overshoot (Überschwingen, Über einen soll zustand hinaus und dann auf diesen einstellt)
-    Sensor: Thermometer
-    Control: Control Element
-
-// Watchmen
-func CheckWaterFlow()
-func TempWatcher(Thermometer, Control Element, Output)
-
-// func (registerSensor(Sensor, func))
-// func (getHardwareSensors)
-
-// struct OneWire interface
-
-// struct WaterFlow type
-// struct Thermometer type
-// struct WaterLevel type
-
-/*
-https://periph.io/device/
-"periph.io/x/periph/host/rpi" for raspi based on http://pinout.xyz/
-func Present() bool if on raspi board
-
-
-// Impmement this interface allows you to parse the config file!
-
-// func (c Config) UnmarshalYAML(unmarshal func(interface{}) error) error{
-// *c = DefaultConfig
-// type plain Config
-// if err:=unmarshal((*plain)(c)); err != nil{
-// return err
-// }
-
-// }
-
-
-// type Periph struct {
-// 	State       *periph.State
-// 	TempSensors map[string]TempSensor
-// 	Controls    map[string]Control
-// }
-
-
-*/
 ```
 
 ## Ideas
@@ -251,16 +222,7 @@ brewman set remote=https://remoteserver:8000
 - https://godoc.org/periph.io/x/periph/conn/onewire
 - https://github.com/kidoman/embd
 
-## Gobot
 
-[doc](https://gobot.io/documentation)
-
-### Installation on Raspberry Pi
-
-Update to latest Raspian Jessie OS and install git and go.
-You would normally install Go and Gobot on your workstation.
-Once installed, cross compile your program on your workstation, transfer the final executable to your Raspberry Pi.
-The pin numbering used by your Gobot program should match the way your board is labeled right on the board itself.
 
 ### Info
 
@@ -268,77 +230,4 @@ The pin numbering used by your Gobot program should match the way your board is 
 - [datadog-guide](https://www.datadoghq.com/blog/go-logging/) std logging interface with const values
 - [clog](https://github.com/go-clog/clog) use go chan to log back
 
-## Recipe Formats
 
-- [beerxml](http://www.beerxml.com)
-- [Beersmith](https://beersmithrecipes.com/)
-- [kleiner brauhelfer](https://beersmithrecipes.com/)
-- [brewrecipedeveloper](http://www.brewrecipedeveloper.de)
-
-
-https://github.com/stone/beerxml 5yeas ago -.-
-
-support only one temp at the moment and gpio pin control (ssr)
-config values of bus is string because periph need a string input: 40, PWM0, GPIO40 are the same
-
-if you set value "dummy" as device type you are in dummy mode
-
-## Calculating
-
-```text
-+ Wasser
-+ Sudhausausbeute
-+ Schüttung
-
-AF = Ausbeutefaktor / get from plato table
-AS = Sudausbeute / SudYield
-AM = Ausschlagmenge/Würze / DecisiveSeasoning
-S  = Schüttung
-SG = Dichte / get from plato table
-SW = %gew/ Grad Plato/Stammwürze in Prozent / OriginalWort
-
-	Skalieren bei Änderung
-	[x] Schüttung
-	[x] Ausschlagwürze
-	[x] Sudausbeute
-
-	Schüttung: SumMalt
-
-	Ausschlagwürze: DecisiveSeasoning AM
-	Sudausbeute: 	SudYield
-
-	add tablewriter for output plato table
-
-	schüttung in prozent ausrechnen
-	Gewitchsprozent ist die Stammwürze
-
-	[x] Hopfen/Stopfhopfen
-	[x] Malze
-	[x] Wasser
-	[x] Incredients
-
-	1. Masse der Stammwürze berechnen
-		- Stammwürze und Ausschlagsmenge
-		- SG Specific Gravity (Extraktgehalt)
-		- Lookup SW -> SG und VOL
-		Masse der Würze = 22 Liter x 1057 : 1000 = 23,25 kg
-	2. Extraktmenge berechnen
-	3. Extraktanteil berechnen
-	4. Gesamtmasse der Schüttung berechnen
-	5. Malzmengen berechnen
-
-https://zwieselbrau.wordpress.com/2017/04/26/berechnung-der-schuettung/
-Formeln:
-	Sudhausausbeute [%] = Stammwürze[°P] * m ( Würzemenge[kg] ) / m (Schüttung [kg] )
-	Schüttung[kg] = Würzemenge[kg] * Stammwürze[°P] / Sudhausausbeute[%]
-	SG(Massendichte SG [kg / L])  = ( 4,13 (kg/m3) * Stammwürze (°P)  ) / 1000 + d(Wasser bei T=20°C)
-
-	m ( Extraktwürze [kg] ) = V ( Würzmenge [L]) * d ( Massendichte SG [kg/L] )
-	m ( benötigtes Extrakt [kg] ) = m ( Extraktwürze [kg] ) * Stammwürze (°P) / 100
-	m (Masse Schüttung [kg]) = m( benötigtes Extrakt [kg] )  / Sudhausausbeute[%]
-
-	abweichungen: https://www.maischemalzundmehr.de/index.php?inhaltmitte=toolssudhausausbeute
-	Sudhausausbeute [%] = (Volumen Ausschlagwürze [L] · Spezifische Dichte [kg/L] · Dezimalwert Stammwürze · Temperaturfaktor / Schüttung [kg] ) · 100
-	Schüttung [kg] = (Volumen Ausschlagwürze [L] · Spezifische Dichte [kg/L] · Dezimalwert Stammwürze / Sudhausausbeute [%]) · 100
-	Spezifische Dichte [kg/L] = (Extrakt [°P] / (258,6 - (Extrakt [°P] / 258,2) · 227,1))+1
-```
