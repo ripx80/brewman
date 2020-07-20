@@ -73,7 +73,7 @@ var (
 		TemperaturUnit:     "Celsius",
 		HotwaterTemperatur: 76.0,
 		CookingTemperatur:  97.5,
-		HoldTemperatur:     10,
+		HoldTemperatur:     10, // time to hold if jod probe failed
 	}
 
 	// DefaultPodConfig = PodConfig{

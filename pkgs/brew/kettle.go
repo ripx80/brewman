@@ -28,7 +28,8 @@ type KettleMetric struct {
 	Fail     int
 }
 
-const cancled = "cancled"
+/*Cancel error if process not finish correctly*/
+const CancelErr = "cancel"
 
 /*Metric returns current Metrics from Kettle*/
 func (k *Kettle) Metric() KettleMetric {
@@ -61,8 +62,7 @@ func (k *Kettle) Off() {
 	if k.Agitator != nil && !k.Agitator.State() {
 		k.Agitator.Off()
 	}
-
-	if k.Heater != nil && !k.Heater.State() {
+	if k.Heater != nil && k.Heater.State() {
 		k.Heater.Off()
 	}
 }
@@ -95,16 +95,15 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 		select {
 		case <-stop:
 			k.Off()
-			return errors.New(cancled)
+			return errors.New(CancelErr)
 		case <-time.After(1 * time.Second):
 			if temp, err = k.TempSet(tempTo); err != nil {
 				return err
 			}
-			// restet old counter
+			// reset old counter
 			if (lastfail != time.Time{}) && time.Now().After(lastfail.Add(time.Second*20)) {
 				failcnt = 0
 				lastfail = time.Time{}
-				log.Info("Reset failcnt")
 			}
 			if !k.TempCompare(last, temp) {
 				failcnt++
@@ -156,7 +155,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 		select {
 		case <-stop:
 			k.Off()
-			return errors.New(cancled)
+			return errors.New(CancelErr)
 
 		case <-ttl:
 			return nil
