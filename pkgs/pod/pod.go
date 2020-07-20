@@ -62,12 +62,14 @@ func (p *Pod) Jobs() map[string]StepMetric {
 
 /*Run loop over the steps and check return values*/
 func (p *Pod) Run() error {
-	defer func() { p.run = false }()
+	defer func() {
+		p.run = false
+		p.Stop()
+	}()
 	var s *Step
 	p.run = true
 	// num of steps can change, dont use range
 	for i := 0; i < len(p.task.Steps); i++ {
-
 		p.task.num = i
 		s = p.task.Steps[i]
 		s.Metric.Start = time.Now()
@@ -109,19 +111,30 @@ func (p *Pod) Mash(extendRest int, confirm chan Quest) {
 			p.StepConfirm("Malt added? continue...", confirm),
 		},
 	}
+
 	for num, rast := range p.recipe.Mash.Rests {
 		task.Steps = append(
 			task.Steps,
-			p.StepTempUp(fmt.Sprintf("Rest %d TempUp", num), rast.Temperatur), // mabye use extra field in Step for additional information like rest num?
-			p.StepTempHold(fmt.Sprintf("Rest %d TempHold", num), rast.Temperatur, time.Duration(rast.Time*60)*time.Second),
+			p.StepTempUp(fmt.Sprintf("Rest %d TempUp", num+1), rast.Temperatur), // mabye use extra field in Step for additional information like rest num?
+			p.StepTempHold(fmt.Sprintf("Rest %d TempHold", num+1), rast.Temperatur, time.Duration(rast.Time*60)*time.Second),
 		)
-		if len(p.recipe.Mash.Rests)-2 == num {
-			task.Steps = append(
-				task.Steps,
-				p.StepConfirmRest("jod test successful?", confirm, extendRest, rast.Temperatur),
-			)
-		}
 	}
+	lastRast := len(p.recipe.Mash.Rests) - 1
+	pos := 0
+	if p.recipe.Mash.Rests[lastRast].Temperatur >= p.recipe.Mash.OutTemperatur {
+		pos = 2 // two steps back
+		lastRast--
+	}
+	idx := len(task.Steps) - pos
+	task.Steps = append(task.Steps, &Step{})
+	copy(task.Steps[idx+1:], task.Steps[idx:])
+	task.Steps[idx] = p.StepConfirmRest("jod test successful?", confirm, extendRest, p.recipe.Mash.Rests[lastRast].Temperatur)
+
+	task.Steps = append(
+		task.Steps,
+		p.StepTempUp("Rest Out TempUp", p.recipe.Mash.OutTemperatur),
+		p.StepMessage("Successful mash"),
+	)
 	p.task = task
 	p.task.step = p.task.Steps[0]
 }
