@@ -1,6 +1,84 @@
 
 # DevBook
 
+## Roadmap
+
+### v0.3
+
+- [x] use interactive mode - use a fancy terminal to show temps (tview)
+- [x] switch between pods
+- [x] add confirm in tview from channel
+- [x] correct color scheme ui
+- [x] recipies: calculate other water/size informations
+- [ ] (I) code quality and simplicity
+- [ ] (I) add explicit usage in subcommands of cmds like recipes scale
+- [ ] (R) remove brewman.log
+- [ ] (I) remove all yaml stuff. Only json is supported
+- [ ] (F) out in json or text
+- [ ] (I) cmd log output set zstate true in red
+- [ ] (I) cmd log ouput add time actual to
+- [ ] (I) add successful finish msg to ui
+- [ ] (F) Dockerfile canot pass config. Config values are zero. When use -h config is needed?!
+- [ ] (I) remove periph from modules use brian-armstrong/gpio direct
+
+#### Bugs
+
+- [x] (F) remove artefacts from modal window after say no to job probe
+- [x] (F) jod test eins zu früh, muss beim springen auf abmaischtemperatur angezeigt werden. Im moment wird er bei dem sprung zur letzten Rast angezeigt, in diesem Fall 76C (Simcoe4 Rezept)
+
+#### Bugs - real setup
+
+- [ ] (F) control off mash hat den hotwater auch aus gemacht! (no error find in code. check 433mhz codenumber in config, test with real)
+- [ ] (F) brewman not stop on hotwater ui (stop in dummy program. test with real setup)
+- [ ] (F) after exit does not turn off the heater (testt, add p.Stop(), test with real setup)
+- [ ] (F) maisher run after confirm no jod probe, focus to main window to go back. get n and y (no errors on dummy. test on real setup)
+- [x] (F) nach der letzten Rast beendet das Programm ohne auf Abmaishtemp zu gehen und Schaltet nicht aus! (test shutdown on real setup)
+- [x] (F) fail count must be more tollerant and reset after time (test on real setup)
+
+- [ ] (F) gpio read failed, for first time starting brewman, crashed main window ui, maybe a retry and failcount
+
+### v0.2
+
+- [x] jump to rast
+- [x] lib improvements reduce dependencies
+- [x] remove in mash config dep
+- [x] document exported funcs, check private
+- [x] weird control. if something happen crazy (heater on -> temp down) log warnings
+- [x] correct os.Exit codes
+- [x] add data channel to lib(not abroved)
+- [x] validate (try run, with a demo recipe) (check all pins, heat cattle for 2*C)
+- [x] add 433mh control unit
+- [x] improve cmd parsing, change to cobra (check structure)
+- [x] removed confirmations
+
+### v0.1
+
+- [x] read config
+- [x] save config
+- [x] convert, save and read recipe
+- [x] build cmd tool for convert m3 recipes
+- [x] change dep to go modules
+- [x] add dummy mode
+- [x] TempWatcher, Temp.Get(), targetTemp, Hold Time
+- [x] one log handler with logrus. in lib also
+- [x] os signal handling. Turn off all controls
+- [x] Control all on/off switch
+- [x] convert all yaml packages to one (recipe, config)
+- [x] build Makefile
+
+### Untracked features
+
+- [ ] ui set the reciept per pod
+- [ ] add continue flag on rest
+- [ ] add all test files, use testify and testify/mocking
+- [ ] Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
+- [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
+- [ ] grab Status from api
+- [ ] Metric Exporter: Prometheus, NodeExporter and internal
+- [ ] grab Metrics from Prometheus
+
+### Untracked
+
 - [ ] (I) write tests
 - [ ] (I) recipe change in ui
 - [ ] (I) prom metric exporter
@@ -10,23 +88,11 @@
 - [ ] (I) include dummy and overwrite config if dummy is selected
 - [ ] (I) include docker
 - [ ] (I) include es docker-compose up
-- [ ] (I) serach for a way to sort the yaml to have the same view (https://blog.labix.org/2014/09/22/announcing-yaml-v2-for-go#mapslice)
+- [ ] (I) serach for a way to sort the yaml to have the same view [doc](https://blog.labix.org/2014/09/22/announcing-yaml-v2-for-go#mapslice)
 - [ ] (I) cmd metric flag for humans
 - [ ] (I) recipe, read, verify (time, temp values)
 - [ ] (I) wire proto direct not over file, hanging
 - [ ] (I) add contrib dir with additonal soft, like scripts or es stuff
-
-- [ ] (F) round values of scaled recipes
-- [ ] (F) nach der letzten Rast beendet das Programm ohne auf Abmaishtemp zu gehen und Schaltet nicht aus!
-- [ ] (F) control off mash hat den hotwater auch aus gemacht!
-- [ ] (F) brewman not stop on hotwater ui
-- [ ] (F) jod test eins zu früh, muss beim springen auf abmaischtemperatur angezeigt werden. Im moment wird er bei dem sprung zur letzten Rast angezeigt, in diesem Fall 76C (Simcoe4 Rezept)
-- [ ] (F) gpio read failed, for first time starting brewman, crashed main window ui, maybe a retry and failcount
-- [ ] (F) after exit does not turn off the heater
-- [ ] (F) fail count must be more tollerant and respect float points (0.06 steps earch second)
-- [ ] (F) get recipe not working, better errors on recipe parsing after scale on web, check input file if yaml on scale
-- [ ] (F) cmd log output set zstate true in red
-- [ ] (F) cmd log ouput add time actual to
 
 - [ ] (HF) maisher dreht nicht, motor läuft dreht aber nicht, hin und wieder
 - [ ] (HF) schleifen beim maishen
@@ -44,34 +110,30 @@
 Rezept geändert:
 Whirpool von 27g auf 30g erhöht.
 
-## Info
-
-config values of bus 40, PWM0, GPIO40 need string values
-
-### Mesh
+## Mesh
 
 - Water in Masher (Open/Close Valves), Count Water Amount, Checks (Open Valves -> Water flows)
 - Heat Water in Masher (Heater On/Off, Agitator On/Off), Checks (Heater On -> Temp increase) Sensors: Plate#1, Temp#1
 - Malt Fill into Masher (Stop: Confirm), Program for Rests
 - Läutern (Stop: confirm, Start Hot Tube Water: confirm), Valves to Cooker, Font Hops/Ingredients
 
-### HotTube
+## HotTube
 
 - (P) Water in Hot Tube (Same as 1. Other Valves) Sensors Plate#2, Temp#2
 - (P) Heat Water in Hot Tube (Same as 2.)
 
-### Cooking
+## Cooking
 
 - Heat Water in Cooker (Temp to cook and hold: 97.5, set with cmd while cooking for precision)
 - Reach Cook Temp: Cooking Time, Info about Hops/Ingredients get in! (message with beep and terminal)
 - Finish Cook Time: Stop(confirm), Whirlpool Info
 
-### Yaml
+## Yaml
 
 Using ghodss/yaml and not the pure go-yaml/yaml.
 In short, this library first converts YAML to JSON using go-yaml and then uses json.Marshal and json.Unmarshal to convert to or from the struct. This means that it effectively reuses the JSON struct tags as well as the custom JSON methods MarshalJSON and UnmarshalJSON unlike go-yaml
 
-### Implementation
+## Implementation
 
 ```go
 // Control Elements
@@ -212,22 +274,18 @@ brewman set remote=https://remoteserver:8000
 
 ## Dependencies
 
-- 433Utils
+```text
 - https://github.com/martinohmann/rfoutlet
-
 - [wiringpi](https://tutorials-raspberrypi.de/wiringpi-installieren-pinbelegung/)
 - https://github.com/stianeikeland/go-rpio
 
 - https://gobot.io/documentation/platforms/raspi/
 - https://godoc.org/periph.io/x/periph/conn/onewire
 - https://github.com/kidoman/embd
+```
 
-
-
-### Info
+## Info
 
 - [go-log](https://github.com/go-log/log) logging with interfaces from [this](https://dave.cheney.net/2017/01/23/the-package-level-logger-anti-pattern) article
 - [datadog-guide](https://www.datadoghq.com/blog/go-logging/) std logging interface with const values
 - [clog](https://github.com/go-clog/clog) use go chan to log back
-
-
