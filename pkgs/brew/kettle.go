@@ -84,10 +84,11 @@ Its a blocking function which you can stop with the stop channel
 */
 func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 	var (
-		last    float64
-		temp    float64
-		failcnt uint8
-		err     error
+		last     float64
+		temp     float64
+		failcnt  uint8
+		lastfail time.Time
+		err      error
 	)
 
 	for {
@@ -99,14 +100,22 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 			if temp, err = k.TempSet(tempTo); err != nil {
 				return err
 			}
+			// restet old counter
+			if (lastfail != time.Time{}) && time.Now().After(lastfail.Add(time.Second*20)) {
+				failcnt = 0
+				lastfail = time.Time{}
+				log.Info("Reset failcnt")
+			}
 			if !k.TempCompare(last, temp) {
 				failcnt++
+				lastfail = time.Now()
 			}
 			last = temp
 
 			if failcnt >= 6 {
 				log.Error("Temperature not increased but the heater is on. Check your hardware setup")
 				failcnt = 0
+				lastfail = time.Time{}
 				k.metric.Fail++
 			}
 
