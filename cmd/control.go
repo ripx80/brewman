@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	log "github.com/ripx80/brave/log/logger"
 	"github.com/spf13/cobra"
 )
@@ -15,10 +13,6 @@ var controlCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		initRecipe()
 		initPods()
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("control called")
-		//return status metric
 	},
 }
 
