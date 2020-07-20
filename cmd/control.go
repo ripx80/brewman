@@ -19,6 +19,7 @@ var controlCmd = &cobra.Command{
 var offCmd = &cobra.Command{
 	Use:   "off",
 	Short: "turn off pods",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
 			"kettle": "hotwater",
@@ -32,6 +33,7 @@ var offCmd = &cobra.Command{
 var offHotwater = &cobra.Command{
 	Use:   "hotwater",
 	Short: "turn off hotwater pod",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
 			"kettle": "hotwater",
@@ -43,6 +45,7 @@ var offHotwater = &cobra.Command{
 var offCooker = &cobra.Command{
 	Use:   "cooker",
 	Short: "turn off cooker pod",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
 			"kettle": "cooker",
@@ -54,6 +57,7 @@ var offCooker = &cobra.Command{
 var offMasher = &cobra.Command{
 	Use:   "masher",
 	Short: "turn off masher pod",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
 			"kettle": "masher",
@@ -65,6 +69,7 @@ var offMasher = &cobra.Command{
 var onCmd = &cobra.Command{
 	Use:   "on",
 	Short: "turn on pods",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
 			"kettle": "hotwater",
@@ -78,6 +83,7 @@ var onCmd = &cobra.Command{
 var onHotwater = &cobra.Command{
 	Use:   "hotwater",
 	Short: "turn on hotwater pod",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
 			"kettle": "hotwater",
@@ -89,6 +95,7 @@ var onHotwater = &cobra.Command{
 var onMasher = &cobra.Command{
 	Use:   "masher",
 	Short: "turn on masher pod",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
 			"kettle": "masher",
@@ -100,6 +107,7 @@ var onMasher = &cobra.Command{
 var onCooker = &cobra.Command{
 	Use:   "cooker",
 	Short: "turn on cooker kettle",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.WithFields(log.Fields{
 			"kettle": "cooker",
