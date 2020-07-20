@@ -1,7 +1,6 @@
 package pod
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -117,7 +116,6 @@ func (p *Pod) StepConfirmRest(msg string, confirm chan Quest, extendRest int, te
 		F: func() error {
 			confirm <- Quest{Msg: msg, Asw: false}
 			quest := <-confirm
-			fmt.Println(quest)
 			if !quest.Asw {
 				p.task.Steps = append(p.task.Steps[:p.task.num+1],
 					append(
@@ -129,5 +127,15 @@ func (p *Pod) StepConfirmRest(msg string, confirm chan Quest, extendRest int, te
 			}
 			return nil
 		},
+	}
+}
+
+/*StepMessage set a message as name like finish or start
+use sleep for reading buffers (ui)
+*/
+func (p *Pod) StepMessage(msg string) *Step {
+	return &Step{
+		Name: msg,
+		F:    func() error { time.Sleep(1 * time.Second); return nil },
 	}
 }
