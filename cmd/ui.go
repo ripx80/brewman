@@ -102,7 +102,6 @@ func (u *ui) refresh() {
 		case <-time.After(1 * time.Second):
 		}
 		if quest != (pod.Quest{}) {
-			// check if options or cmd has focus
 			tp := u.commands
 			if u.options.GetFocusable().HasFocus() {
 				tp = u.options
@@ -198,6 +197,13 @@ func (u *ui) Content() {
 			hold = fmt.Sprintf("%02d:%02.f", m.Step.Hold/time.Minute, math.Mod(m.Step.Hold.Seconds(), 60))
 		}
 
+		var state string
+		if m.Kettle.Heater == false {
+			state = fmt.Sprintf("[#8080ff::b]%t[#ffffff]", m.Kettle.Heater)
+		} else {
+			state = fmt.Sprintf("[red::b]%t[white]", m.Kettle.Heater)
+		}
+
 		row(u.content, u.content.GetRowCount(), []string{
 			m.StepName,
 			timeString(m.Step.Start),
@@ -206,7 +212,7 @@ func (u *ui) Content() {
 			fmt.Sprintf("%02f", m.Step.TempStart),
 			fmt.Sprintf("%02f", m.Kettle.Temp),
 			fmt.Sprintf("%02f", m.Step.TempEnd),
-			fmt.Sprintf("%t", m.Kettle.Heater),
+			state,
 			fmt.Sprintf("%d", m.Kettle.Fail),
 		},
 			&tview.TableCell{
