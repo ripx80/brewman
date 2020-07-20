@@ -10,6 +10,8 @@
 - [x] add confirm in tview from channel
 - [x] correct color scheme ui
 - [x] recipies: calculate other water/size informations
+- [x] (I) reduce binary size with ldflags
+- [x] (I) ui round TempStart, Temp, TempEnd
 - [ ] (I) code quality and simplicity
 - [ ] (I) add explicit usage in subcommands of cmds like recipes scale
 - [ ] (R) remove brewman.log
@@ -18,24 +20,24 @@
 - [ ] (I) cmd log output set zstate true in red
 - [ ] (I) cmd log ouput add time actual to
 - [ ] (I) add successful finish msg to ui
-- [ ] (F) Dockerfile canot pass config. Config values are zero. When use -h config is needed?!
 - [ ] (I) remove periph from modules use brian-armstrong/gpio direct
+- [ ] (I) handle errors returned to ui. Maybe modal?
 
 #### Bugs
 
 - [x] (F) remove artefacts from modal window after say no to job probe
 - [x] (F) jod test eins zu früh, muss beim springen auf abmaischtemperatur angezeigt werden. Im moment wird er bei dem sprung zur letzten Rast angezeigt, in diesem Fall 76C (Simcoe4 Rezept)
+- [x] (F) fail count must be more tollerant and reset after time
+- [x] (F) control off accept no arguments anymore if you misstype
+- [x] (F) after exit does not turn off the heater, it was a logic bug
+- [x] (F) nach der letzten Rast beendet das Programm ohne auf Abmaishtemp zu gehen und Schaltet nicht aus!
+- [x] (F) maisher run after confirm no jod probe, focus to main window to go back.
 
 #### Bugs - real setup
 
-- [ ] (F) control off mash hat den hotwater auch aus gemacht! (no error find in code. check 433mhz codenumber in config, test with real)
-- [ ] (F) brewman not stop on hotwater ui (stop in dummy program. test with real setup)
-- [ ] (F) after exit does not turn off the heater (testt, add p.Stop(), test with real setup)
-- [ ] (F) maisher run after confirm no jod probe, focus to main window to go back. get n and y (no errors on dummy. test on real setup)
-- [x] (F) nach der letzten Rast beendet das Programm ohne auf Abmaishtemp zu gehen und Schaltet nicht aus! (test shutdown on real setup)
-- [x] (F) fail count must be more tollerant and reset after time (test on real setup)
 
-- [ ] (F) gpio read failed, for first time starting brewman, crashed main window ui, maybe a retry and failcount
+- [ ] (F) gpio write failed, for first time starting brewman after boot, add retry
+         "failed to open gpio 17 direction file for writing" only the first time
 
 ### v0.2
 
