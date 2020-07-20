@@ -15,18 +15,18 @@ TIMEOUT = 15
 V = 0
 Q = $(if $(filter 1,$V),,@)
 M = $(shell printf "\033[34;1m▶\033[0m")
-
+LDFLAGS = '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE) -s -w'
 export GO111MODULE=on
 
 .PHONY: all
 all: fmt | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
 	$Q $(GO) build \
 		-tags release \
-		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
+		-ldflags ${LDFLAGS} \
 		-o $(BIN)/brewman main.go; \
 	$(GOARM) $(GO) build \
 		-tags release \
-		-ldflags '-X $(MODULE)/cmd.Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
+		-ldflags ${LDFLAGS} \
 		-o $(BIN)/brewman_arm main.go
 # Tools
 
