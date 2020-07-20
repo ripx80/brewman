@@ -79,7 +79,7 @@ func (p *Pod) Run() error {
 
 		if err := s.F(); err != nil {
 			s.Metric.End = time.Now()
-			if err.Error() == "cancled" {
+			if err.Error() == brew.CancelErr {
 				return nil
 			}
 			return err
