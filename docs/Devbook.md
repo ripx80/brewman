@@ -35,7 +35,6 @@
 
 #### Bugs - real setup
 
-
 - [ ] (F) gpio write failed, for first time starting brewman after boot, add retry
          "failed to open gpio 17 direction file for writing" only the first time
 

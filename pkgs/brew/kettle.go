@@ -28,7 +28,7 @@ type KettleMetric struct {
 	Fail     int
 }
 
-/*Cancel error if process not finish correctly*/
+/*CancelErr error if process not finish correctly*/
 const CancelErr = "cancel"
 
 /*Metric returns current Metrics from Kettle*/

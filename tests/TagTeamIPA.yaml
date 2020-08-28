@@ -1,0 +1,71 @@
+Cook:
+  FontHops:
+    - Alpha: 15.8
+      Amount: 5
+      Name: Columbus (CTZ)
+      Time: 0
+  Hops: null
+  Ingredients: null
+  Time: 60
+  Whirpool:
+    - Alpha: 9.5
+      Amount: 70
+      Name: Centennial oder Comet (DE/US)
+      Time: 0
+    - Alpha: 15.8
+      Amount: 70
+      Name: Columbus (CTZ)
+      Time: 0
+Fermentation:
+  Carbonation: 4.5
+  EndDegree: 75
+  Hops:
+    - Alpha: 0
+      Amount: 70
+      Name: Galaxy
+      Time: 0
+    - Alpha: 0
+      Amount: 70
+      Name: Denali
+      Time: 0
+  Ingredients: null
+  Temperatur: 19
+  Yeast: WY1318 oder Fermentis S-04
+Global:
+  Alcohol: 6
+  Annotation: ""
+  Author: sudlachs
+  Clone: ""
+  Color: 11
+  Date: 18.03.2019
+  DecisiveSeasoning: 20
+  IBU: 35
+  Name: TAG TEAM IPA
+  OriginalWort: 14.5
+  ShortDescription:
+    Frisches, fruchtig-exotisches NEIPA nach allerneuster Literatur.
+    Schmeckt super!
+  Sort: India Pale Ale
+  SudYield: 65
+Mash:
+  InTemperatur: 55
+  Malts:
+    - Amount: 3625
+      Name: Pale Ale
+    - Amount: 625
+      Name: Haferflocken
+    - Amount: 500
+      Name: Münchner Malz
+    - Amount: 250
+      Name: Weizenmalz
+  OutTemperatur: 78
+  Rests:
+    - Temperatur: 55
+      Time: 1
+    - Temperatur: 68
+      Time: 1
+    - Temperatur: 78
+      Time: 1
+Water:
+  Grouting: 11
+  MainCast: 19

@@ -1,0 +1,113 @@
+{
+   "Global": {
+      "Name": "IPA Simcoe ",
+      "Date": "14.09.2013",
+      "Sort": "India Pale Ale",
+      "Author": "Siedlerbräu",
+      "Clone": "",
+      "DecisiveSeasoning": 43,
+      "SudYield": 0,
+      "OriginalWort": 13.7,
+      "IBU": 50,
+      "Color": 9,
+      "Alcohol": 5.7,
+      "ShortDescription": "Ein Ami IPA mit Cassis- und Johannisbeer-Aroma",
+      "Annotation": "Die Hefe war aus 2ter Führung !\r\nIch konnte mit diesem Bier den 3ten Platz bei der Staatsmeisterschaft erreichen.\r\nhttp://www.bierig.org/?pid=110\r\nGebraut wurde mit dem Speidel Braumeister 50 Liter."
+   },
+   "Water": {
+      "MainCast": 50,
+      "Grouting": 16
+   },
+   "Mash": {
+      "InTemperatur": 57,
+      "OutTemperatur": 78,
+      "Malts": [
+         {
+            "Name": "Pilsner",
+            "Amount": 6500
+         },
+         {
+            "Name": "Münchner",
+            "Amount": 3800
+         },
+         {
+            "Name": "Cara hell",
+            "Amount": 500
+         },
+         {
+            "Name": "Cara Red",
+            "Amount": 500
+         },
+         {
+            "Name": "Haferflocken",
+            "Amount": 500
+         }
+      ],
+      "Rests": [
+         {
+            "Time": 10,
+            "Temperatur": 57
+         },
+         {
+            "Time": 60,
+            "Temperatur": 64
+         },
+         {
+            "Time": 20,
+            "Temperatur": 72
+         },
+         {
+            "Time": 5,
+            "Temperatur": 78
+         }
+      ]
+   },
+   "Cook": {
+      "Time": 90,
+      "Ingredients": null,
+      "FontHops": null,
+      "Hops": [
+         {
+            "Name": "Simcoe",
+            "Amount": 35,
+            "Time": 90,
+            "Alpha": 12.9
+         },
+         {
+            "Name": "Simcoe",
+            "Amount": 35,
+            "Time": 45,
+            "Alpha": 12.9
+         },
+         {
+            "Name": "Simcoe",
+            "Amount": 35,
+            "Time": 5,
+            "Alpha": 12.9
+         }
+      ],
+      "Whirlpool": null
+   },
+   "Fermentation": {
+      "Yeast": "Fermentis Safale US-05",
+      "Temperatur": 20,
+      "EndDegree": 81.8,
+      "Carbonation": 4,
+      "Hops": [
+         {
+            "Name": "Simcoe",
+            "Amount": 115,
+            "Time": 0,
+            "Alpha": 0
+         },
+         {
+            "Name": "Cascade ",
+            "Amount": 65,
+            "Time": 0,
+            "Alpha": 0
+         }
+      ],
+      "Ingredients": null
+   },
+   "Comments": null
+}

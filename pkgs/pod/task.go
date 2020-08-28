@@ -13,6 +13,7 @@ var idleStep = &Step{
 	F:    func() error { return nil },
 }
 
+/*StepMetric represents the Metrics of each step*/
 type StepMetric struct {
 	Start,
 	End time.Time
@@ -36,7 +37,7 @@ type Task struct {
 	num   int   // if i know the num i dont need the step pointer
 }
 
-//Quest stimple struct with question and answer
+/*Quest stimple struct with question and answer*/
 type Quest struct {
 	Msg string
 	Asw bool
