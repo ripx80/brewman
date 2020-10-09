@@ -59,12 +59,10 @@ func (k *Kettle) On() {
 Off turns the Agitator and the Heater of if available
 */
 func (k *Kettle) Off() {
-	if k.Agitator != nil && !k.Agitator.State() {
-		k.Agitator.Off()
-	}
-	if k.Heater != nil && k.Heater.State() {
-		k.Heater.Off()
-	}
+	// not use state, console cant cache real state
+	k.Agitator.Off()
+	k.Heater.Off()
+
 }
 
 /*

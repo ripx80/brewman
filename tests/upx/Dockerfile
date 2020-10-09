@@ -9,3 +9,4 @@ COPY --from=builder /upx-3.96-amd64_linux/upx /app
 ENTRYPOINT [ "./app" ]
 
 # docker run -it --rm -v $(pwd):/out ripx80/upx -9 -o out/brewman_upx out/brewman
+# docker build -t ripx80/upx .

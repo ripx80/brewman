@@ -101,7 +101,7 @@
 
 - [ ] (HF) hotwater nicht dicht am Hahn
 - [ ] (H) verlängerungskabel
-- [ ] Test all new hardware improvements
+- [x] Test all new hardware improvements
 - [ ] add screen for water and temps
 - [ ] add prometheus client for metrics
 - [x] (HF) maisher dreht nicht, motor läuft dreht aber nicht, hin und wieder

@@ -9,8 +9,10 @@ make; ./bin/brewman
 You will find your executables in bin
 
 - brewman - Brewery Helper
-- m3c - Maische-Malz-und-Mehr recipe converter
-- m3d - Maische-Malz-und-Mehr recipe downloader
+
+build with upx
+
+./build.sh
 
 ## Features
 
