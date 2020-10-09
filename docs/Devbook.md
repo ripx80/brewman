@@ -12,6 +12,8 @@
 - [x] recipies: calculate other water/size informations
 - [x] (I) reduce binary size with ldflags
 - [x] (I) ui round TempStart, Temp, TempEnd
+- [ ] (F) remove set and get and print help
+- [ ] (I) improve get metrics: hotwater, masher, cooker
 - [ ] (I) code quality and simplicity
 - [ ] (I) add explicit usage in subcommands of cmds like recipes scale
 - [ ] (R) remove brewman.log
@@ -95,14 +97,19 @@
 - [ ] (I) wire proto direct not over file, hanging
 - [ ] (I) add contrib dir with additonal soft, like scripts or es stuff
 
-- [ ] (HF) maisher dreht nicht, motor läuft dreht aber nicht, hin und wieder
-- [ ] (HF) schleifen beim maishen
+### Hardware
+
 - [ ] (HF) hotwater nicht dicht am Hahn
-- [ ] (HF) längere kabel für temp sensoren
 - [ ] (H) verlängerungskabel
-- [ ] (H) Loch im Maisher für Temp Sensor
-- [ ] (H) Schaltkasten für Raspberry
-- [ ] (HF) vordere schraube maisher am Dockel motor anziehen. Starke vibration
+- [ ] Test all new hardware improvements
+- [ ] add screen for water and temps
+- [ ] add prometheus client for metrics
+- [x] (HF) maisher dreht nicht, motor läuft dreht aber nicht, hin und wieder
+- [x] (HF) schleifen beim maishen
+- [x] (HF) längere kabel für temp sensoren
+- [x] (H) Loch im Maisher für Temp Sensor
+- [x] (H) Schaltkasten für Raspberry
+- [x] (HF) vordere schraube maisher am Dockel motor anziehen. Starke vibration
 
 - [ ] rot: hotwater
 - [ ] weiß: masher
