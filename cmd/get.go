@@ -10,11 +10,6 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "get basic output",
 	Long:  `get gives you multiple informations in your prefered output format `,
-	//	PreRun: func(cmd *cobra.Command, args []string) {},
-	Run: func(cmd *cobra.Command, args []string) {
-		//state.Id = viper.GetInt("jobid")
-		fmt.Println("get called")
-	},
 }
 
 // no json support format
@@ -22,7 +17,6 @@ var getConfig = &cobra.Command{
 	Use:   "config",
 	Short: "get config",
 	Long:  `outputs the current config`,
-	//	PreRun: func(cmd *cobra.Command, args []string) {},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Print(cfg.conf)
 	},
@@ -33,7 +27,6 @@ var getRecipe = &cobra.Command{
 	Use:   "recipe",
 	Short: "get recipe",
 	Long:  `output the current recipe`,
-	//	PreRun: func(cmd *cobra.Command, args []string) {},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Print(cfg.recipe)
 	},

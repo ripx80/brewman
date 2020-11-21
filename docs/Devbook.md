@@ -12,7 +12,8 @@
 - [x] recipies: calculate other water/size informations
 - [x] (I) reduce binary size with ldflags
 - [x] (I) ui round TempStart, Temp, TempEnd
-- [ ] (F) remove set and get and print help
+- [ ] (I) add cmd go to temp (Abmaischtemp) and hold for min
+- [ ] (I) accustic signal on error, use beep
 - [ ] (I) improve get metrics: hotwater, masher, cooker
 - [ ] (I) code quality and simplicity
 - [ ] (I) add explicit usage in subcommands of cmds like recipes scale
@@ -27,6 +28,11 @@
 
 #### Bugs
 
+- [ ] (F) somethimes he dont send ON and say its true, state problem (confirm, change kettle on)
+- [ ] (F) Sensor Read failed: pod job run faild, if sensor read failed the pod job crashed (confirm, change error handling)
+- [ ] (F) in ui no windows on hard exit! Need some hints
+- [x] (F) failcnt 10sec then increase by one
+- [x] (F) remove set and get and print help
 - [x] (F) remove artefacts from modal window after say no to job probe
 - [x] (F) jod test eins zu früh, muss beim springen auf abmaischtemperatur angezeigt werden. Im moment wird er bei dem sprung zur letzten Rast angezeigt, in diesem Fall 76C (Simcoe4 Rezept)
 - [x] (F) fail count must be more tollerant and reset after time

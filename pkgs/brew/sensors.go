@@ -78,7 +78,6 @@ func (td *TempDummy) Get() (float64, error) {
 Get data from DS18B20
 */
 func (ds *DS18B20) Get() (float64, error) {
-
 	data, err := ioutil.ReadFile(ds.Path)
 	if err != nil {
 		return 0, err

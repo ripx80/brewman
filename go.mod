@@ -18,3 +18,5 @@ require (
 	gopkg.in/validator.v2 v2.0.0-20191107172027-c3144fdedc21
 	periph.io/x/periph v3.6.2+incompatible
 )
+
+//replace github.com/ripx80/recipe => ../recipe/

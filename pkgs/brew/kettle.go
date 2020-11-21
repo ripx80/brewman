@@ -8,8 +8,6 @@ import (
 	log "github.com/ripx80/brave/log/logger"
 )
 
-// todo: remove log from here, only temp fail will log. but we can do this with metrics outside
-
 /*
 Kettle is the pod unit with Temp, Heater and Agitator
 */
@@ -46,20 +44,14 @@ func (k *Kettle) Metric() KettleMetric {
 On turns the Agitator and the Heater on if available
 */
 func (k *Kettle) On() {
-	if k.Agitator != nil && !k.Agitator.State() {
-		k.Agitator.On()
-	}
-
-	if k.Heater != nil && !k.Heater.State() {
-		k.Heater.On()
-	}
+	k.Agitator.On()
+	k.Heater.On()
 }
 
 /*
 Off turns the Agitator and the Heater of if available
 */
 func (k *Kettle) Off() {
-	// not use state, console cant cache real state
 	k.Agitator.Off()
 	k.Heater.Off()
 
@@ -96,7 +88,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 			return errors.New(CancelErr)
 		case <-time.After(1 * time.Second):
 			if temp, err = k.TempSet(tempTo); err != nil {
-				return err
+				log.Error("temp sensor failed: %w", err)
 			}
 			// reset old counter
 			if (lastfail != time.Time{}) && time.Now().After(lastfail.Add(time.Second*20)) {
@@ -109,7 +101,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 			}
 			last = temp
 
-			if failcnt >= 6 {
+			if failcnt >= 10 {
 				log.Error("Temperature not increased but the heater is on. Check your hardware setup")
 				failcnt = 0
 				lastfail = time.Time{}
@@ -160,7 +152,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 
 		case <-time.After(1 * time.Second):
 			if temp, err = k.TempSet(tempTo); err != nil {
-				return err
+				log.Error("temp sensor failed: %w", err)
 			}
 
 			// if you have 1.5 difference on holding, increase counter
@@ -168,7 +160,7 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 				failcnt++
 			}
 
-			if failcnt >= 3 {
+			if failcnt >= 10 {
 				log.Error("temperature not holding but the heater is on. check your hardware setup")
 				k.metric.Fail++
 				failcnt = 0
