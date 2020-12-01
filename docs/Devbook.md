@@ -12,39 +12,51 @@
 - [x] recipies: calculate other water/size informations
 - [x] (I) reduce binary size with ldflags
 - [x] (I) ui round TempStart, Temp, TempEnd
-- [ ] (I) add cmd go to temp (Abmaischtemp) and hold for min
-- [ ] (I) accustic signal on error, use beep
+
+#### Metrics
+
 - [ ] (I) improve get metrics: hotwater, masher, cooker
-- [ ] (I) code quality and simplicity
-- [ ] (I) add explicit usage in subcommands of cmds like recipes scale
-- [ ] (R) remove brewman.log
-- [ ] (I) remove all yaml stuff. Only json is supported
-- [ ] (F) out in json or text
+- [ ] (F) Metric Exporter: Prometheus, NodeExporter and internal
+- [ ] (F) grab Metrics from Prometheus
+
+#### Handling
+
+- [ ] (I) add cmd go to temp (Abmaischtemp) and hold for min
+
+#### Messages
+
+- [ ] (R) remove brewman.log from ui
+- [ ] (I) handle errors returned to ui. Maybe modal?
+- [ ] (I) add successful finish msg to ui
 - [ ] (I) cmd log output set zstate true in red
 - [ ] (I) cmd log ouput add time actual to
-- [ ] (I) add successful finish msg to ui
+
+#### Internal
+
 - [ ] (I) remove periph from modules use brian-armstrong/gpio direct
-- [ ] (I) handle errors returned to ui. Maybe modal?
+- [ ] (I) code quality and simplicity
+- [ ] (I) add explicit usage in subcommands of cmds like recipes scale
+- [ ] (I) remove all yaml stuff. Only json is supported, out in json or text
 
 #### Bugs
 
-- [ ] (F) somethimes he dont send ON and say its true, state problem (confirm, change kettle on)
-- [ ] (F) Sensor Read failed: pod job run faild, if sensor read failed the pod job crashed (confirm, change error handling)
-- [ ] (F) in ui no windows on hard exit! Need some hints
-- [x] (F) failcnt 10sec then increase by one
-- [x] (F) remove set and get and print help
-- [x] (F) remove artefacts from modal window after say no to job probe
-- [x] (F) jod test eins zu früh, muss beim springen auf abmaischtemperatur angezeigt werden. Im moment wird er bei dem sprung zur letzten Rast angezeigt, in diesem Fall 76C (Simcoe4 Rezept)
-- [x] (F) fail count must be more tollerant and reset after time
-- [x] (F) control off accept no arguments anymore if you misstype
-- [x] (F) after exit does not turn off the heater, it was a logic bug
-- [x] (F) nach der letzten Rast beendet das Programm ohne auf Abmaishtemp zu gehen und Schaltet nicht aus!
-- [x] (F) maisher run after confirm no jod probe, focus to main window to go back.
-
-#### Bugs - real setup
-
-- [ ] (F) gpio write failed, for first time starting brewman after boot, add retry
+- [ ] (B) gpio write failed, for first time starting brewman after boot, add retry
          "failed to open gpio 17 direction file for writing" only the first time
+- [ ] (B) somethimes he dont send ON and say its true, state problem (confirm, change kettle on)
+- [ ] (B) send off failed rest 2->3 increase. (maybe send 2x off or on when failcnt increase)
+- [ ] (B) in ui no windows on hard exit! Need some hints
+- [ ] (B) disable log entries in ui. Long logs crash the ui
+- [ ] (B) rest over recipe rest crash the prog on cmd
+- [x] (B) Sensor Read failed: pod job run faild, if sensor read failed the pod job crashed (confirm, change error handling)
+- [x] (B) failcnt 10sec then increase by one
+- [x] (B) remove set and get and print help
+- [x] (B) remove artefacts from modal window after say no to job probe
+- [x] (B) jod test eins zu früh, muss beim springen auf abmaischtemperatur angezeigt werden. Im moment wird er bei dem sprung zur letzten Rast angezeigt, in diesem Fall 76C (Simcoe4 Rezept)
+- [x] (B) fail count must be more tollerant and reset after time
+- [x] (B) control off accept no arguments anymore if you misstype
+- [x] (B) after exit does not turn off the heater, it was a logic bug
+- [x] (B) nach der letzten Rast beendet das Programm ohne auf Abmaishtemp zu gehen und Schaltet nicht aus!
+- [x] (B) maisher run after confirm no jod probe, focus to main window to go back.
 
 ### v0.2
 
@@ -83,11 +95,10 @@
 - [ ] Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
 - [ ] grab Status from api
-- [ ] Metric Exporter: Prometheus, NodeExporter and internal
-- [ ] grab Metrics from Prometheus
 
 ### Untracked
 
+- [ ] (I) accustic signal on error, use beep
 - [ ] (I) write tests
 - [ ] (I) recipe change in ui
 - [ ] (I) prom metric exporter
