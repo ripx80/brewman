@@ -8,6 +8,7 @@ import (
 	"github.com/ripx80/recipe"
 )
 
+/*Pod hold a kettle with recipe and task scheduler*/
 type Pod struct {
 	Kettle *brew.Kettle
 	recipe *recipe.Recipe
@@ -16,7 +17,8 @@ type Pod struct {
 	run    bool
 }
 
-type PodMetric struct {
+/*Metric provide metrics for the pod*/
+type Metric struct {
 	StepName,
 	Recipe string
 	Running bool
@@ -24,8 +26,9 @@ type PodMetric struct {
 	Kettle  brew.KettleMetric
 }
 
-func (p *Pod) Metric() PodMetric {
-	return PodMetric{
+/*Metric return a Metric struct with metrics*/
+func (p *Pod) Metric() Metric {
+	return Metric{
 		StepName: p.task.step.Name,
 		Running:  p.run,
 		Recipe:   p.recipe.Global.Name,
@@ -34,11 +37,13 @@ func (p *Pod) Metric() PodMetric {
 	}
 }
 
+/*Stop the pod*/
 func (p *Pod) Stop() {
 	close(p.stop)
 	p.stop = make(chan struct{}) // better to send something than stop?
 }
 
+/*New create a new pod*/
 func New(kettle *brew.Kettle, recipe *recipe.Recipe) *Pod {
 	return &Pod{
 		Kettle: kettle,

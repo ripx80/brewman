@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math"
 	"sync"
 	"time"
@@ -26,8 +25,6 @@ const brand string = `  _________       ___.               ___.
 - add locks on buffer access
 - add wg group and stop on routines
 - add finish Step to display
-- bug: if you display logs in modal and a modal question appears no focus!
-		use u.content to display logs
 
 future
 - Get list of jobs from pod (to see what will happen)
@@ -51,11 +48,11 @@ type ui struct {
 
 type buffer struct {
 	n string
-	b []pod.PodMetric
+	b []pod.Metric
 	m sync.Mutex
 }
 
-func (b *buffer) Metric(m pod.PodMetric) {
+func (b *buffer) Metric(m pod.Metric) {
 	b.m.Lock()
 	defer b.m.Unlock()
 
@@ -79,7 +76,7 @@ func (b *buffer) Metric(m pod.PodMetric) {
 }
 
 func (b *buffer) Clear() {
-	b.b = []pod.PodMetric{}
+	b.b = []pod.Metric{}
 }
 
 func (u *ui) Metrics() {
@@ -265,24 +262,24 @@ func (u *ui) Commands(name string, pod *pod.Pod) {
 	u.app.SetFocus(u.commands)
 }
 
-func (u *ui) Logs(fp string) {
-	content, err := ioutil.ReadFile(fp)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("can not read from file")
-	}
-	u.modal = tview.NewModal().
-		SetText(fmt.Sprintf("%s", content)).
-		AddButtons([]string{"close"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			u.container.RemoveItem(u.modal)
-			u.app.SetFocus(u.options)
-		})
+// func (u *ui) Logs(fp string) {
+// 	content, err := ioutil.ReadFile(fp)
+// 	if err != nil {
+// 		log.WithFields(log.Fields{
+// 			"error": err,
+// 		}).Error("can not read from file")
+// 	}
+// 	u.modal = tview.NewModal().
+// 		SetText(fmt.Sprintf("%s", content)).
+// 		AddButtons([]string{"close"}).
+// 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+// 			u.container.RemoveItem(u.modal)
+// 			u.app.SetFocus(u.options)
+// 		})
 
-	u.app.SetFocus(u.modal)
-	u.container.AddItem(u.modal, 0, 1, true)
-}
+// 	u.app.SetFocus(u.modal)
+// 	u.container.AddItem(u.modal, 0, 1, true)
+// }
 
 func (u *ui) Instant() {
 	u.instant <- struct{}{}
@@ -306,9 +303,9 @@ func (u *ui) Options() *tview.List {
 			u.active = 2
 			u.Instant()
 		}).
-		AddItem("Logs", "Logs", 'l', func() {
-			u.Logs(logfile)
-		}).
+		// AddItem("Logs", "Logs", 'l', func() {
+		// 	u.Logs(logfile)
+		// }).
 		AddItem("Quit", "Press to exit", 'q', func() {
 			u.app.Stop()
 		}).
@@ -328,9 +325,9 @@ func view() error {
 		commands:  tview.NewList().ShowSecondaryText(false),
 		modal:     tview.NewModal(),
 		buffers: [3]buffer{
-			buffer{n: "Hotwater", b: []pod.PodMetric{}, m: sync.Mutex{}},
-			buffer{n: "Masher", b: []pod.PodMetric{}, m: sync.Mutex{}},
-			buffer{n: "Cooker", b: []pod.PodMetric{}, m: sync.Mutex{}},
+			{n: "Hotwater", b: []pod.Metric{}, m: sync.Mutex{}},
+			{n: "Masher", b: []pod.Metric{}, m: sync.Mutex{}},
+			{n: "Cooker", b: []pod.Metric{}, m: sync.Mutex{}},
 		},
 		instant: make(chan struct{}),
 		active:  0,

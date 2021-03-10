@@ -16,8 +16,6 @@
 #### Metrics
 
 - [ ] (I) improve get metrics: hotwater, masher, cooker
-- [ ] (F) Metric Exporter: Prometheus, NodeExporter and internal
-- [ ] (F) grab Metrics from Prometheus
 
 #### Handling
 
@@ -25,10 +23,10 @@
 
 #### Messages
 
-- [ ] (R) remove brewman.log from ui
+- [x] (R) remove brewman.log from ui
+- [x] (I) cmd log output set zstate true in red
 - [ ] (I) handle errors returned to ui. Maybe modal?
 - [ ] (I) add successful finish msg to ui
-- [ ] (I) cmd log output set zstate true in red
 - [ ] (I) cmd log ouput add time actual to
 
 #### Internal
@@ -43,10 +41,11 @@
 - [ ] (B) gpio write failed, for first time starting brewman after boot, add retry
          "failed to open gpio 17 direction file for writing" only the first time
 - [ ] (B) somethimes he dont send ON and say its true, state problem (confirm, change kettle on)
-- [ ] (B) send off failed rest 2->3 increase. (maybe send 2x off or on when failcnt increase)
+            - change the number of times to send the signal, check this in next test case
+            - send off failed rest 2->3 increase. (maybe send 2x off or on when failcnt increase)
 - [ ] (B) in ui no windows on hard exit! Need some hints
-- [ ] (B) disable log entries in ui. Long logs crash the ui
-- [ ] (B) rest over recipe rest crash the prog on cmd
+- [ ] (B) rest over recipe rest crash the prog on cmd????
+- [x] (B) disable log entries in ui. Long logs crash the ui
 - [x] (B) Sensor Read failed: pod job run faild, if sensor read failed the pod job crashed (confirm, change error handling)
 - [x] (B) failcnt 10sec then increase by one
 - [x] (B) remove set and get and print help
@@ -95,6 +94,8 @@
 - [ ] Interface: Sensors (sensors.temp, sensors.flow, sensors.*), Control: 433GHz, Relais
 - [ ] check recipe, all nessecary values set. no negative and creepy values? (tobi)
 - [ ] grab Status from api
+- [ ] (F) Metric Exporter: Prometheus, NodeExporter and internal
+- [ ] (F) grab Metrics from Prometheus
 
 ### Untracked
 

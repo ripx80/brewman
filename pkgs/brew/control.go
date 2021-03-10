@@ -145,11 +145,14 @@ func (e *External) State() bool {
 /*On send on code over the given gpio pin*/
 func (s *Signal) On() error {
 	t := signal.NewTransmitter(s.Pin)
-	err := t.Transmit(s.Code, signal.DefaultProtocol, 330, signal.DefaultBitLength)
-	if err != nil {
-		return err
+	// to be sure the heater turns out send more than one the off cmd
+	for i := 0; i < 2; i++ {
+		err := t.Transmit(s.Code, signal.DefaultProtocol, 330, signal.DefaultBitLength)
+		if err != nil {
+			return err
+		}
+		t.Wait()
 	}
-	t.Wait()
 	s.state = true
 	return nil
 }
@@ -157,11 +160,14 @@ func (s *Signal) On() error {
 /*Off send off code over the given gpio pin (on code - 1 )*/
 func (s *Signal) Off() error {
 	t := signal.NewTransmitter(s.Pin)
-	err := t.Transmit((s.Code - 1), signal.DefaultProtocol, 330, signal.DefaultBitLength)
-	if err != nil {
-		return err
+	// to be sure the heater turns out send more than one the off cmd
+	for i := 0; i < 2; i++ {
+		err := t.Transmit((s.Code - 1), signal.DefaultProtocol, 330, signal.DefaultBitLength)
+		if err != nil {
+			return err
+		}
+		t.Wait()
 	}
-	t.Wait()
 	s.state = false
 	return nil
 }
