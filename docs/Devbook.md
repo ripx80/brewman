@@ -15,26 +15,25 @@
 
 #### Metrics
 
-- [ ] (I) improve get metrics: hotwater, masher, cooker
+- [x] (I) improve get metrics: hotwater, masher, cooker
 
 #### Handling
 
-- [ ] (I) add cmd go to temp (Abmaischtemp) and hold for min
+- [x] (I) add cmd go to temp (Abmaischtemp) and hold for min
 
 #### Messages
 
 - [x] (R) remove brewman.log from ui
-- [x] (I) cmd log output set zstate true in red
 - [ ] (I) handle errors returned to ui. Maybe modal?
 - [ ] (I) add successful finish msg to ui
-- [ ] (I) cmd log ouput add time actual to
+- [ ] (I) cmd log ouput add time actual to, not working in kettle only pod has the informations, log must be moved?
 
 #### Internal
 
 - [ ] (I) remove periph from modules use brian-armstrong/gpio direct
+- [ ] (I) remove all yaml stuff. Only json is supported, out in json or text
 - [ ] (I) code quality and simplicity
 - [ ] (I) add explicit usage in subcommands of cmds like recipes scale
-- [ ] (I) remove all yaml stuff. Only json is supported, out in json or text
 
 #### Bugs
 
@@ -43,8 +42,7 @@
 - [ ] (B) somethimes he dont send ON and say its true, state problem (confirm, change kettle on)
             - change the number of times to send the signal, check this in next test case
             - send off failed rest 2->3 increase. (maybe send 2x off or on when failcnt increase)
-- [ ] (B) in ui no windows on hard exit! Need some hints
-- [ ] (B) rest over recipe rest crash the prog on cmd????
+- [x] (B) rest over recipe rest crash the prog on cmd like: ./bin/brewman mash rest 5
 - [x] (B) disable log entries in ui. Long logs crash the ui
 - [x] (B) Sensor Read failed: pod job run faild, if sensor read failed the pod job crashed (confirm, change error handling)
 - [x] (B) failcnt 10sec then increase by one
@@ -110,10 +108,10 @@
 - [ ] (I) include docker
 - [ ] (I) include es docker-compose up
 - [ ] (I) serach for a way to sort the yaml to have the same view [doc](https://blog.labix.org/2014/09/22/announcing-yaml-v2-for-go#mapslice)
-- [ ] (I) cmd metric flag for humans
 - [ ] (I) recipe, read, verify (time, temp values)
 - [ ] (I) wire proto direct not over file, hanging
 - [ ] (I) add contrib dir with additonal soft, like scripts or es stuff
+- [ ] (I) cmd log output set zstate true in red, not working out of the box with logrus
 
 ### Hardware
 
