@@ -158,7 +158,7 @@ func (p *Pod) MashRast(num int) {
 	p.task.step = p.task.Steps[0]
 }
 
-/*MashRast can jump to a specific rast. Not Index Safe*/
+/*MashTemp increase temp and hold for minutes*/
 func (p *Pod) MashTemp(temp float64, holdTime int) {
 	p.task = &Task{
 		Name: "MashTemp",
