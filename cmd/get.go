@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/ripx80/brave/exit"
+	"github.com/ripx80/brewman/pkgs/pod"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +36,30 @@ var getRecipe = &cobra.Command{
 	},
 }
 
+// no json support format
+var getMetrics = &cobra.Command{
+	Use:   "metrics",
+	Short: "get metrics",
+	Long:  `output the current metrics`,
+	Run: func(cmd *cobra.Command, args []string) {
+		initRecipe()
+		//initChan() // chans before pods, need confirm channel
+		initPods()
+		m := make(map[string]pod.Metric)
+		m["hotwater"] = cfg.pods.hotwater.Metric()
+		m["masher"] = cfg.pods.hotwater.Metric()
+		m["cooker"] = cfg.pods.hotwater.Metric()
+		out, err := json.Marshal(m)
+		if err != nil {
+			fmt.Println(err)
+			exit.Exit(1)
+		}
+		fmt.Println(string(out))
+	},
+}
+
 func init() {
 	getCmd.AddCommand(getConfig)
 	getCmd.AddCommand(getRecipe)
+	getCmd.AddCommand(getMetrics)
 }
