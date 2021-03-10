@@ -28,6 +28,7 @@ var getRecipe = &cobra.Command{
 	Short: "get recipe",
 	Long:  `output the current recipe`,
 	Run: func(cmd *cobra.Command, args []string) {
+		initRecipe()
 		fmt.Print(cfg.recipe)
 	},
 }
