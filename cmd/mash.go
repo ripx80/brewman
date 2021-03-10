@@ -82,7 +82,7 @@ var mashRest = &cobra.Command{
 				"kettle": "masher",
 				"error":  err,
 			}).Error("rast number not in recipe")
-
+			exit.Exit(1)
 		}
 		cfg.pods.masher.MashRast(rastNum - 1) // set defined task with steps
 
