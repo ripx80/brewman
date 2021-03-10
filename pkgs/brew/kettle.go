@@ -103,6 +103,7 @@ func (k *Kettle) TempUp(stop chan struct{}, tempTo float64) error {
 
 			if failcnt >= 10 {
 				log.Error("Temperature not increased but the heater is on. Check your hardware setup")
+				k.Heater.On() // set it again
 				failcnt = 0
 				lastfail = time.Time{}
 				k.metric.Fail++
@@ -160,8 +161,14 @@ func (k *Kettle) TempHold(stop chan struct{}, tempTo float64, timeout time.Durat
 				failcnt++
 			}
 
+			// heat protection
+			if !k.Heater.State() && temp >= (tempTo+1.0) {
+				log.Error("temperature increase but heater is off. check your hardware setup")
+				k.Heater.Off() // set it off, high temp is critical, state is incorrect
+			}
+
 			if failcnt >= 10 {
-				log.Error("temperature not holding but the heater is on. check your hardware setup")
+				log.Error("temperature not holding. check your hardware setup")
 				k.metric.Fail++
 				failcnt = 0
 			}
