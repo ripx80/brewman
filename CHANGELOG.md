@@ -29,8 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - improve cmd parsing, change to cobra
 - removed confirmations
 
-## [0.3] - 2020-07-01
+## [0.3] - 2021-03-10
 
 - add terminal ui
 - add recipie calculations
 - improve code quality and simplicity
+- add mash temp to cmd
+- fix multiple errors
+- add metrics
