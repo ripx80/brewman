@@ -158,6 +158,19 @@ func (p *Pod) MashRast(num int) {
 	p.task.step = p.task.Steps[0]
 }
 
+/*MashRast can jump to a specific rast. Not Index Safe*/
+func (p *Pod) MashTemp(temp float64, holdTime int) {
+	p.task = &Task{
+		Name: "MashTemp",
+		Steps: []*Step{
+			p.StepAgitatorOn(),
+			p.StepTempUp(fmt.Sprintf("Temp: %02f, Time: %d, TempUp", temp, holdTime), temp),
+			p.StepTempHold(fmt.Sprintf("Temp: %02f, Time: %d, TemHold", temp, holdTime), temp, time.Duration(holdTime*60)*time.Second),
+		},
+	}
+	p.task.step = p.task.Steps[0]
+}
+
 /*Cook implements cooking programm*/
 func (p *Pod) Cook(temp float64) {
 	p.task = &Task{

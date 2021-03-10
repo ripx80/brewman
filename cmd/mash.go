@@ -101,7 +101,48 @@ var mashRest = &cobra.Command{
 	},
 }
 
+var mashTemperatur = &cobra.Command{
+	Use:   "temp",
+	Short: "mash to the given temp and hold for minutes",
+	Long:  `mash to the given temp and hold for minutes`,
+	Args:  cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		temp, err := strconv.ParseFloat(args[0], 64)
+		timeHold, err := strconv.Atoi(args[1]) //in minutes
+		if err != nil {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("wrong arguments")
+			exit.Exit(1)
+		}
+		if temp > 100 || temp <= 0 {
+			log.WithFields(log.Fields{
+				"kettle": "masher",
+				"error":  err,
+			}).Error("confusing temperature argument")
+			exit.Exit(1)
+		}
+
+		cfg.pods.masher.MashTemp(temp, timeHold) // set defined task with steps
+
+		go func() {
+			defer cfg.wg.Done()
+			cfg.wg.Add(1)
+			if err := cfg.pods.masher.Run(); err != nil {
+				log.WithFields(log.Fields{
+					"kettle": "masher",
+					"error":  err,
+				}).Error("kettle func failed")
+			}
+			cfg.done <- struct{}{}
+		}()
+		handle()
+	},
+}
+
 func init() {
 	mashCmd.AddCommand(mashMetric)
 	mashCmd.AddCommand(mashRest)
+	mashCmd.AddCommand(mashTemperatur)
 }
