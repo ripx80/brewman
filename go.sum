@@ -101,6 +101,8 @@ github.com/ripx80/brave v0.0.0-20200724063539-08b685d50e39 h1:SWFQxG3C0r8P3Na+3Y
 github.com/ripx80/brave v0.0.0-20200724063539-08b685d50e39/go.mod h1:h8oz1oB7UUh+KO3zWSk5AfSP3wxwh0xXkSNlc8k9zdE=
 github.com/ripx80/recipe v0.0.0-20210326064505-c8e4accab37d h1:OisngCxISQgCSayk3qHwz4sZeK7TSUxEDW7GQGps6oQ=
 github.com/ripx80/recipe v0.0.0-20210326064505-c8e4accab37d/go.mod h1:+GL/WKIey2sG4d6rwrY/sY9JjpROdMBO2UzioBX6yq4=
+github.com/ripx80/recipe v0.0.0-20210326073035-eede3fde797d h1:/Fg2wizFqHrQ5mZGHK1aT4CzOO8tZQWMSCuNAO7kWS0=
+github.com/ripx80/recipe v0.0.0-20210326073035-eede3fde797d/go.mod h1:+GL/WKIey2sG4d6rwrY/sY9JjpROdMBO2UzioBX6yq4=
 github.com/ripx80/signal v0.0.0-20200221114242-f8c0121af15b h1:8WuTv8AessvIdsLoI9/8yBj7OrFGj2PK4i2CIjkRdDI=
 github.com/ripx80/signal v0.0.0-20200221114242-f8c0121af15b/go.mod h1:SQU//Y0regjIO6meY0domJ6o2ZOki7upJTUKRNHnfus=
 github.com/rivo/tview v0.0.0-20200414130344-8e06c826b3a5 h1:7Suev+ewwyOLkitf4/NTKQDMWfRCC6LNAt2p8H2goS4=

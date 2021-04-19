@@ -37,6 +37,8 @@
 
 #### Bugs
 
+- [ ] (B) if ripx80/upx is not present build will fail. build it from test/upx auto
+- [ ] (B) canot update to new version of tcell, use new fields
 - [ ] (B) gpio write failed, for first time starting brewman after boot, add retry
          "failed to open gpio 17 direction file for writing" only the first time
 - [ ] (B) somethimes he dont send ON and say its true, state problem (confirm, change kettle on)
