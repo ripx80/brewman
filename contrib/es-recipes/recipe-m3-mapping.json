@@ -1,0 +1,154 @@
+{
+    "settings": {
+        "number_of_shards": 1
+    },
+    "mappings": {
+        "properties": {
+            "Comments": {
+                "properties": {
+                    "Comment": {
+                        "type": "text"
+                    },
+                    "Date": {
+                        "type": "date",
+                        "format": "dd.MM.yyyy"
+                    },
+                    "Name": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "Cook": {
+                "properties": {
+                    "Hops": {
+                        "properties": {
+                            "Alpha": {
+                                "type": "float"
+                            },
+                            "Amount": {
+                                "type": "integer"
+                            },
+                            "Name": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            },
+                            "Time": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "Time": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Fermentation": {
+                "properties": {
+                    "Carbonation": {
+                        "type": "short"
+                    },
+                    "EndDegree": {
+                        "type": "short"
+                    },
+                    "Temperatur": {
+                        "type": "short"
+                    },
+                    "Yeast": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "Global": {
+                "properties": {
+                    "Alcohol": {
+                        "type": "float"
+                    },
+                    "Annotation": {
+                        "type": "text"
+                    },
+                    "Author": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    },
+                    "Clone": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    },
+                    "Color": {
+                        "type": "short"
+                    },
+                    "Date": {
+                        "type": "date",
+                        "format": "dd.MM.yyyy"
+                    },
+                    "DecisiveSeasoning": {
+                        "type": "integer"
+                    },
+                    "IBU": {
+                        "type": "short"
+                    },
+                    "Name": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    },
+                    "OriginalWort": {
+                        "type": "short"
+                    },
+                    "ShortDescription": {
+                        "type": "text"
+                    },
+                    "Sort": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    },
+                    "SudYield": {
+                        "type": "short"
+                    }
+                }
+            },
+            "Mash": {
+                "properties": {
+                    "InTemperatur": {
+                        "type": "short"
+                    },
+                    "Malts": {
+                        "properties": {
+                            "Amount": {
+                                "type": "integer"
+                            },
+                            "Name": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "OutTemperatur": {
+                        "type": "short"
+                    },
+                    "Rests": {
+                        "properties": {
+                            "Temperatur": {
+                                "type": "short"
+                            },
+                            "Time": {
+                                "type": "short"
+                            }
+                        }
+                    }
+                }
+            },
+            "Water": {
+                "properties": {
+                    "Grouting": {
+                        "type": "short"
+                    },
+                    "MainCast": {
+                        "type": "short"
+                    }
+                }
+            }
+        }
+    }
+}
